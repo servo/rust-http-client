@@ -1,0 +1,13 @@
+/*!
+
+A simple HTTP client in Rust
+
+*/
+
+#[link(name = "http_client",
+       vers = "0.1",
+       uuid = "3bfdcc24-ca55-447b-a9e1-8f7ac37c222e")];
+
+#[crate_type = "lib"];
+
+use std;
