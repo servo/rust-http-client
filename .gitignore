@@ -1,0 +1,4 @@
+http_client
+*~
+*.so
+*.dylib
