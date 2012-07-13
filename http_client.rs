@@ -8,40 +8,40 @@ const timeout: uint = 2000;
 /**
 A quick hack URI type
 */
-type uri = {
+type Uri = {
     host: str,
     path: str
 };
 
 /// HTTP status codes
-enum status_code {
-    status_ok = 200,
-    status_unknown
+enum StatusCode {
+    StatusOk = 200,
+    StatusUnknown
 }
 
 /// HTTP request error conditions
-enum request_error {
-    error_dns_resolution,
-    error_connect,
-    error_misc
+enum RequestError {
+    ErrorDnsResolution,
+    ErrorConnect,
+    ErrorMisc
 }
 
 /// Request 
-enum event {
-    status(status_code),
-    payload(~mut option<~[u8]>),
-    error(request_error)
+enum RequestEvent {
+    Status(StatusCode),
+    Payload(~mut option<~[u8]>),
+    Error(RequestError)
 }
 
-class http_request {
+class HttpRequest {
 
-    let uri: uri;
+    let uri: Uri;
 
-    new(+uri: uri) {
+    new(+uri: Uri) {
         self.uri = uri;
     }
 
-    fn begin(cb: fn(+event)) {
+    fn begin(cb: fn(+RequestEvent)) {
         let iotask = uv_global_loop::get();
 
         #debug("http_client: looking up uri %?", self.uri);
@@ -64,18 +64,18 @@ class http_request {
                         option::unwrap(best_ip)
                     } else {
                         // FIXME: Need test
-                        cb(error(error_misc));
+                        cb(Error(ErrorMisc));
                         ret;
                     }
                 } else {
                     #debug("http_client: got no IP addresses for %?", self.uri);
                     // FIXME: Need test
-                    cb(error(error_misc));
+                    cb(Error(ErrorMisc));
                     ret;
                 }
             } else {
                 #debug("http_client: DNS lookup failure: %?", ip_addrs.get_err());
-                cb(error(error_dns_resolution));
+                cb(Error(ErrorDnsResolution));
                 ret;
             }
         };
@@ -89,7 +89,7 @@ class http_request {
                 result::unwrap(socket)
             } else {
                 #debug("http_client: unable to connect to %?: %?", ip_addr, socket);
-                cb(error(error_connect));
+                cb(Error(ErrorConnect));
                 ret;
             }
         };
@@ -104,7 +104,7 @@ class http_request {
           result::ok(*) { }
           result::err(e) {
             // FIXME: Need test
-            cb(error(error_misc));
+            cb(Error(ErrorMisc));
             ret;
           }
         }
@@ -114,7 +114,7 @@ class http_request {
             if read_port.is_ok() {
                 result::unwrap(read_port)
             } else {
-                cb(error(error_misc));
+                cb(Error(ErrorMisc));
                 ret;
             }
         };
@@ -124,7 +124,7 @@ class http_request {
 
             if next_data.is_ok() {
                 let next_data = result::unwrap(next_data);
-                let the_payload = payload(~mut some(next_data));
+                let the_payload = Payload(~mut some(next_data));
                 cb(the_payload);
             } else {
                 #debug("http_client: read error: %?", next_data);
@@ -137,7 +137,7 @@ class http_request {
                   _ {
                     // FIXME: Need tests and error handling
                     socket.read_stop(read_port);
-                    cb(error(error_misc));
+                    cb(Error(ErrorMisc));
                     ret;
                   }
                 }
@@ -147,7 +147,7 @@ class http_request {
     }
 }
 
-fn sequence(request: http_request) -> ~[event] {
+fn sequence(request: HttpRequest) -> ~[RequestEvent] {
     let mut events = ~[];
     do request.begin |event| {
         vec::push(events, event)
@@ -162,11 +162,11 @@ fn test_resolve_error() {
         path: "/"
     };
 
-    let request = http_request(uri);
+    let request = HttpRequest(uri);
     let events = sequence(request);
 
     assert events == ~[
-        error(error_dns_resolution),
+        Error(ErrorDnsResolution),
     ];
 }
 
@@ -179,11 +179,11 @@ fn test_connect_error() {
         path: "/"
     };
 
-    let request = http_request(uri);
+    let request = HttpRequest(uri);
     let events = sequence(request);
 
     assert events == ~[
-        error(error_connect),
+        Error(ErrorConnect),
     ];
 }
 
@@ -194,12 +194,12 @@ fn test_connect_success() {
         path: "/"
     };
 
-    let request = http_request(uri);
+    let request = HttpRequest(uri);
     let events = sequence(request);
 
     for events.each |ev| {
         alt ev {
-          error(*) { fail }
+          Error(*) { fail }
           _ { }
         }
     }
