@@ -11,3 +11,5 @@ A simple HTTP client in Rust
 #[crate_type = "lib"];
 
 use std;
+
+mod connection;
