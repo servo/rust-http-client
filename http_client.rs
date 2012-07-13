@@ -1,7 +1,14 @@
-import std::net::ip::{get_addr, format_addr, ipv4, ipv6};
+import result::result;
+import std::net::ip::{
+    get_addr, format_addr, ipv4, ipv6, ip_addr,
+    ip_get_addr_err
+};
 import std::net::tcp::{connect, tcp_socket};
 import std::uv_global_loop;
 import comm::{methods};
+import connection::{
+    Connection, ConnectionFactory, UvConnectionFactory
+};
 
 const timeout: uint = 2000;
 
@@ -33,20 +40,35 @@ enum RequestEvent {
     Error(RequestError)
 }
 
-class HttpRequest {
+type DnsResolver = fn@(host: str) -> result<~[ip_addr], ip_get_addr_err>;
 
+fn uv_dns_resolver() -> DnsResolver {
+    |host| {
+        let iotask = uv_global_loop::get();
+        get_addr(host, iotask)
+    }
+}
+
+fn uv_http_request(+uri: Uri) -> HttpRequest<tcp_socket, UvConnectionFactory> {
+    HttpRequest(uv_dns_resolver(), UvConnectionFactory, uri)
+}
+
+class HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
+
+    let resolve_ip_addr: DnsResolver;
+    let connection_factory: CF;
     let uri: Uri;
 
-    new(+uri: Uri) {
+    new(resolver: DnsResolver, +connection_factory: CF, +uri: Uri) {
+        self.resolve_ip_addr = resolver;
+        self.connection_factory = connection_factory;
         self.uri = uri;
     }
 
     fn begin(cb: fn(+RequestEvent)) {
-        let iotask = uv_global_loop::get();
-
         #debug("http_client: looking up uri %?", self.uri);
         let ip_addr = {
-            let ip_addrs = get_addr(self.uri.host, iotask);
+            let ip_addrs = self.resolve_ip_addr(self.uri.host);
             if ip_addrs.is_ok() {
                 let ip_addrs = result::unwrap(ip_addrs);
                 // FIXME: This log crashes
@@ -84,7 +106,7 @@ class HttpRequest {
 
         let socket = {
             #debug("http_client: connecting to %?", ip_addr);
-            let socket = connect(copy ip_addr, 80, iotask);
+            let socket = self.connection_factory.connect(copy ip_addr, 80);
             if socket.is_ok() {
                 result::unwrap(socket)
             } else {
@@ -147,7 +169,7 @@ class HttpRequest {
     }
 }
 
-fn sequence(request: HttpRequest) -> ~[RequestEvent] {
+fn sequence<C: Connection, CF: ConnectionFactory<C>>(request: HttpRequest<C, CF>) -> ~[RequestEvent] {
     let mut events = ~[];
     do request.begin |event| {
         vec::push(events, event)
@@ -162,7 +184,7 @@ fn test_resolve_error() {
         path: "/"
     };
 
-    let request = HttpRequest(uri);
+    let request = uv_http_request(uri);
     let events = sequence(request);
 
     assert events == ~[
@@ -179,7 +201,7 @@ fn test_connect_error() {
         path: "/"
     };
 
-    let request = HttpRequest(uri);
+    let request = uv_http_request(uri);
     let events = sequence(request);
 
     assert events == ~[
@@ -194,7 +216,7 @@ fn test_connect_success() {
         path: "/"
     };
 
-    let request = HttpRequest(uri);
+    let request = uv_http_request(uri);
     let events = sequence(request);
 
     for events.each |ev| {
