@@ -13,3 +13,5 @@ A simple HTTP client in Rust
 use std;
 
 mod connection;
+mod parser;
+mod response_headers;

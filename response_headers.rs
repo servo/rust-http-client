@@ -1,0 +1,3 @@
+type ResponseHeaders = {
+    bogus: int
+};
