@@ -1,0 +1,34 @@
+VPATH=%VPATH%
+
+CC ?= gcc
+RUSTC ?= rustc
+AR ?= ar
+RUSTFLAGS ?=
+CFLAGS ?=
+
+CFLAGS += -fPIC
+
+RUST_SRC = $(shell find $(VPATH)/. -type f -name '*.rs')
+
+.PHONY: all
+all: libhttp_client.dummy
+
+libhttp_client.dummy: http_client.rc $(RUST_SRC) libhttp_parser.a
+	$(RUSTC) $(RUSTFLAGS) $< -o $@
+	touch $@
+
+http_client-test: http_client.rc $(RUST_SRC) libhttp_parser.a
+	$(RUSTC) $(RUSTFLAGS) $< -o $@ --test
+
+libhttp_parser.a: http_parser.o
+	$(AR) rcs $@ $<
+
+http_parser.o: http_parser.c
+	$(CC) $(CFLAGS) $< -o $@ -c
+
+check: http_client-test
+	./http_client-test
+
+.PHONY: clean
+clean:
+	rm -f http_client-test *.o *.a *.so *.dylib *.dll *.dummy
