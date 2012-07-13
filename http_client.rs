@@ -1,4 +1,5 @@
-import result::result;
+import comm::{port, chan, methods};
+import result::{result, ok, err};
 import std::net::ip::{
     get_addr, format_addr, ipv4, ipv6, ip_addr,
     ip_get_addr_err
@@ -7,8 +8,10 @@ import std::net::tcp::{connect, tcp_socket};
 import std::uv_global_loop;
 import comm::{methods};
 import connection::{
-    Connection, ConnectionFactory, UvConnectionFactory
+    Connection, ConnectionFactory, UvConnectionFactory,
+    MockConnection, MockConnectionFactory
 };
+import parser::{Parser, ParserCallbacks};
 
 const timeout: uint = 2000;
 
@@ -58,11 +61,24 @@ class HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
     let resolve_ip_addr: DnsResolver;
     let connection_factory: CF;
     let uri: Uri;
+    let parser: Parser;
 
     new(resolver: DnsResolver, +connection_factory: CF, +uri: Uri) {
         self.resolve_ip_addr = resolver;
         self.connection_factory = connection_factory;
         self.uri = uri;
+
+        let callbacks: ParserCallbacks = {
+            on_message_begin: || true,
+            on_url: |_data| true,
+            on_header_field: |_data| true,
+            on_header_value: |_data| true,
+            on_headers_complete: || true,
+            on_body: |_data| true,
+            on_message_complete: || true
+        };
+
+        self.parser = Parser(callbacks);
     }
 
     fn begin(cb: fn(+RequestEvent)) {
@@ -225,4 +241,37 @@ fn test_connect_success() {
           _ { }
         }
     }
+}
+
+#[test]
+#[ignore(reason = "ICE")]
+fn test_simple_response() {
+    let uri = {
+        host: "whatever",
+        path: "/"
+    };
+
+    let mock_connection: MockConnection = {
+        write_fn: |data| { ok(()) },
+        read_start_fn: || {
+            let port = port();
+            let chan = port.chan();
+
+            let response = "HTTP/1.0 200 OK\
+                            \
+                            Test";
+            chan.send(ok(str::bytes(response)));
+
+            ok(port)
+        },
+        read_stop_fn: |_port| { ok(()) }
+    };
+
+    let mock_connection_factory: MockConnectionFactory = {
+        connect_fn: |ip, port| {
+
+            // FIXME this doesn't work
+            fail;//ok(mock_connection)
+        }
+    };
 }

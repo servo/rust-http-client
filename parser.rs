@@ -1,111 +1,113 @@
-/*!
+//! Higher-level Rust constructs for http_parser
 
-Parses HTTP headers
+export HttpCallback, HttpDataCallback;
+export ParserCallbacks, Parser;
 
-*/
-
-export parse, parse_error;
-
-import result::{result, ok, err};
-import response_headers::{ResponseHeader, ResponseHeaderBlock};
-
-/**
-The result of parsing the headers out of a u8 buffer is a set of HTTP
-headers plus whatever following bytes were not part of the header
-*/
-type ParseResult = {
-    header_block: ResponseHeaderBlock,
-    rest: ~[u8]
+import vec::unsafe::from_buf;
+import libc::{c_int, c_void, c_char, size_t};
+import ptr::{null, addr_of};
+import http_parser::{
+    http_parser, http_parser_settings, HTTP_REQUEST
 };
 
-enum ParseError {
-    /// Returned when the header block isn't terminated by a double-
-    /// newline, i.e. we need to keep receiving data
-    IncompleteHeader,
-    BadUnicode
-}
+import http_parser::bindgen::{http_parser_init};
 
-fn parse(data: &[u8]) -> result<ParseResult, ParseError> {
+type HttpCallback = fn@() -> bool;
+type HttpDataCallback = fn@(+~[u8]) -> bool;
 
-    // Get a slice of all headers through the end of the
-    // double-newline that begins the payload
+type ParserCallbacks = {
+    on_message_begin: HttpCallback,
+    on_url: HttpDataCallback,
+    on_header_field: HttpDataCallback,
+    on_header_value: HttpDataCallback,
+    on_headers_complete: HttpCallback,
+    on_body: HttpDataCallback,
+    on_message_complete: HttpCallback
+};
 
-    let mut slice_size = 0;
+class Parser {
+    let mut http_parser: http_parser;
+    let settings: http_parser_settings;
+    let callbacks: ParserCallbacks;
 
-    let header_slice = get_header_slice(data);
-    let header_str = header_slice.chain( |header_slice| {
-        slice_size = header_slice.len();
-        get_header_str(header_slice)
-    });
-    let headers = header_str.chain(parse_headers);
-    let result = headers.chain( |headers| {
-        ok({
-            header_block: {
-                headers: headers
-            },
-            rest: ~[]
-        })
-    });
-    ret result;
-}
+    new(callbacks: ParserCallbacks) {
+        self.callbacks = callbacks;
 
-// FIXME: Would prefer to return a slice here but am getting
-// compiler errors
-fn get_header_slice(data: &[u8]) -> result<~[u8], ParseError> {
-    let double_newline = &[0x0D, 0x0A, 0x0D, 0x0A];
+        self.http_parser = {
+            _type_flags: 0,
+            state: 0,
+            header_state: 0,
+            index: 0,
+            nread: 0,
+            content_length: 0,
+            http_major: 0,
+            http_minor: 0,
+            status_code: 0,
+            method: 0,
+            http_errno_upgrade: 0,
+            data: null()
+        };
 
-    if data.len() < double_newline.len() {
-        ret err(IncompleteHeader);
-    }
+        http_parser_init(addr_of(self.http_parser), HTTP_REQUEST);
+        self.http_parser.data = addr_of(self.callbacks) as *c_void;
 
-    for uint::range(0, data.len() - double_newline.len()) |i| {
-        let subslice = vec::view(data, i, i + double_newline.len());
-        if subslice == double_newline {
-            ret ok(data.slice(0, i + double_newline.len()));
-        }
-    }
-
-    ret err(IncompleteHeader);
-}
-
-#[test]
-fn get_header_slice_should_return_incomplete_header_if_the_data_is_not_large_enough_for_a_double_newline() {
-    // This isn't even enough bytes for a double newline
-    let data = &[65, 65, 65];
-    assert get_header_slice(data) == err(IncompleteHeader);
-}
-
-#[test]
-fn get_header_slice_should_return_incomplete_header_if_it_does_not_encounter_a_double_newline() {
-    // This isn't even enough bytes for a double newline
-    let data = &[65, 65, 65, 65, 65, 65];
-    assert get_header_slice(data) == err(IncompleteHeader);
-}
-
-fn get_header_str(data: &[u8]) -> result<str, ParseError> {
-    if str::is_utf8(data) {
-        // FIXME: from_bytes requires a unique vec
-        let data = data.slice(0, data.len());
-        ok(str::from_bytes(data))
-    } else {
-        err(BadUnicode)
+        self.settings = {
+            on_message_begin: on_message_begin,
+            on_url: on_url,
+            on_header_field: on_header_field,
+            on_header_value: on_header_value,
+            on_headers_complete: on_headers_complete,
+            on_body: on_body,
+            on_message_complete: on_message_complete
+        };
     }
 }
 
-#[test]
-fn get_header_str_should_return_bad_unicode_error_if_data_is_not_utf8() {
-    let double_newline = ~[0x0D, 0x0A, 0x0D, 0x0A];
-    let data = ~[0xFF, 0xFF, 0xFF, 0xFF] + double_newline;
-    assert get_header_str(data) == err(BadUnicode);
+fn callbacks(http_parser: *http_parser) -> *ParserCallbacks {
+    unsafe {
+        assert (*http_parser).data.is_not_null();
+        ret (*http_parser).data as *ParserCallbacks;
+    }
 }
 
-#[test]
-fn get_header_str_should_convert_to_str() {
-    let double_newline = ~[0x0D, 0x0A, 0x0D, 0x0A];
-    let data = ~[65, 65, 65, 65] + double_newline;
-    assert get_header_str(data) == ok("AAAA\u000D\u000A\u000D\u000A");
+extern fn on_message_begin(http_parser: *http_parser) -> c_int {
+    unsafe {
+        !((*callbacks(http_parser)).on_message_begin() as c_int)
+    }
 }
 
-fn parse_headers(&&text: str) -> result<~[ResponseHeader], ParseError> {
-    fail
+extern fn on_url(http_parser: *http_parser, at: *u8, length: size_t) -> c_int {
+    unsafe {
+        !((*callbacks(http_parser)).on_url(from_buf(at, length as uint)) as c_int)
+    }
+}
+
+extern fn on_header_field(http_parser: *http_parser, at: *u8, length: size_t) -> c_int {
+    unsafe {
+        !((*callbacks(http_parser)).on_header_field(from_buf(at, length as uint)) as c_int)
+    }
+}
+
+extern fn on_header_value(http_parser: *http_parser, at: *u8, length: size_t) -> c_int {
+    unsafe {
+        !((*callbacks(http_parser)).on_header_value(from_buf(at, length as uint)) as c_int)
+    }
+}
+
+extern fn on_headers_complete(http_parser: *http_parser) -> c_int {
+    unsafe {
+        !((*callbacks(http_parser)).on_headers_complete() as c_int)
+    }
+}
+
+extern fn on_body(http_parser: *http_parser, at: *u8, length: size_t) -> c_int {
+    unsafe {
+        !((*callbacks(http_parser)).on_body(from_buf(at, length as uint)) as c_int)
+    }
+}
+
+extern fn on_message_complete(http_parser: *http_parser) -> c_int {
+    unsafe {
+        !((*callbacks(http_parser)).on_message_complete() as c_int)
+    }
 }

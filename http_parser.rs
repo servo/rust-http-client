@@ -388,8 +388,7 @@ const HPE_PAUSED: u32 = 27_u32;
 const HPE_UNKNOWN: u32 = 28_u32;
 
 type struct_http_parser = {
-    _type: c_uchar,
-    flags: c_uchar,
+    _type_flags: c_uchar,
     state: c_uchar,
     header_state: c_uchar,
     index: c_uchar,
@@ -399,8 +398,7 @@ type struct_http_parser = {
     http_minor: c_ushort,
     status_code: c_ushort,
     method: c_uchar,
-    http_errno: c_uchar,
-    upgrade: c_uchar,
+    http_errno_upgrade: c_uchar,
     data: *c_void,
 };
 
