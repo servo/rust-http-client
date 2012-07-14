@@ -166,7 +166,6 @@ class HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
 
             if next_data.is_ok() {
                 let next_data = result::unwrap(next_data);
-                #debug("next_data: %?", next_data);
                 self.parser.execute(next_data, &callbacks);
                 let the_payload = Payload(~mut some(next_data));
                 cb(the_payload);
