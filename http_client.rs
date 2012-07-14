@@ -1,3 +1,4 @@
+import ptr::addr_of;
 import comm::{port, chan, methods};
 import result::{result, ok, err};
 import std::net::ip::{
@@ -68,17 +69,7 @@ class HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
         self.connection_factory = connection_factory;
         self.uri = uri;
 
-        let callbacks: ParserCallbacks = {
-            on_message_begin: || true,
-            on_url: |_data| true,
-            on_header_field: |_data| true,
-            on_header_value: |_data| true,
-            on_headers_complete: || true,
-            on_body: |_data| true,
-            on_message_complete: || true
-        };
-
-        self.parser = Parser(callbacks);
+        self.parser = Parser();
     }
 
     fn begin(cb: fn(+RequestEvent)) {
@@ -157,11 +148,26 @@ class HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
             }
         };
 
+        // This unsafety is unfortunate but we can't capture self
+        // into shared closures
+        let unsafe_self = addr_of(self);
+        let callbacks: ParserCallbacks = unsafe {{
+            on_message_begin: || (*unsafe_self).on_message_begin(),
+            on_url: |data| (*unsafe_self).on_url(data),
+            on_header_field: |data| (*unsafe_self).on_header_field(data),
+            on_header_value: |data| (*unsafe_self).on_header_value(data),
+            on_headers_complete: || (*unsafe_self).on_headers_complete(),
+            on_body: |data| (*unsafe_self).on_body(data),
+            on_message_complete: || (*unsafe_self).on_message_complete()
+        }};
+
         loop {
             let next_data = read_port.recv();
 
             if next_data.is_ok() {
                 let next_data = result::unwrap(next_data);
+                #debug("next_data: %?", next_data);
+                self.parser.execute(next_data, &callbacks);
                 let the_payload = Payload(~mut some(next_data));
                 cb(the_payload);
             } else {
@@ -182,6 +188,41 @@ class HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
             }
         }
         socket.read_stop(read_port);
+    }
+
+    fn on_message_begin() -> bool {
+        #debug("on_message_begin");
+        true
+    }
+
+    fn on_url(+data: ~[u8]) -> bool {
+        #debug("on_url");
+        true
+    }
+
+    fn on_header_field(+data: ~[u8]) -> bool {
+        #debug("on_header_field");
+        true
+    }
+
+    fn on_header_value(+data: ~[u8]) -> bool {
+        #debug("on_header_value");
+        true
+    }
+
+    fn on_headers_complete() -> bool {
+        #debug("on_headers_complete");
+        true
+    }
+
+    fn on_body(+data: ~[u8]) -> bool {
+        #debug("on_body");
+        true
+    }
+
+    fn on_message_complete() -> bool {
+        #debug("on_message_complete");
+        true
     }
 }
 

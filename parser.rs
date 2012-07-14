@@ -27,11 +27,8 @@ type ParserCallbacks = {
 class Parser {
     let mut http_parser: http_parser;
     let settings: http_parser_settings;
-    let callbacks: ParserCallbacks;
 
-    new(callbacks: ParserCallbacks) {
-        self.callbacks = callbacks;
-
+    new() {
         self.http_parser = {
             _type_flags: 0,
             state: 0,
@@ -48,7 +45,6 @@ class Parser {
         };
 
         http_parser_init(addr_of(self.http_parser), HTTP_REQUEST);
-        self.http_parser.data = addr_of(self.callbacks) as *c_void;
 
         self.settings = {
             on_message_begin: on_message_begin,
@@ -61,7 +57,8 @@ class Parser {
         };
     }
 
-    fn execute(data: &[u8]) {
+    fn execute(data: &[u8], callbacks: &ParserCallbacks) {
+        self.http_parser.data = addr_of(*callbacks) as *c_void;
         do vec::as_buf(data) |buf| {
             http_parser_execute(addr_of(self.http_parser),
                                 addr_of(self.settings),
