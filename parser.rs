@@ -9,8 +9,7 @@ import ptr::{null, addr_of};
 import http_parser::{
     http_parser, http_parser_settings, HTTP_REQUEST
 };
-
-import http_parser::bindgen::{http_parser_init};
+import http_parser::bindgen::{http_parser_init, http_parser_execute};
 
 type HttpCallback = fn@() -> bool;
 type HttpDataCallback = fn@(+~[u8]) -> bool;
@@ -60,6 +59,14 @@ class Parser {
             on_body: on_body,
             on_message_complete: on_message_complete
         };
+    }
+
+    fn execute(data: &[u8]) {
+        do vec::as_buf(data) |buf| {
+            http_parser_execute(addr_of(self.http_parser),
+                                addr_of(self.settings),
+                                buf as *c_char, data.len() as size_t);
+        }
     }
 }
 
