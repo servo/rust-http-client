@@ -12,9 +12,9 @@ while letting us have additional implementations for
 mocking
 */
 trait Connection {
-    fn write(data: ~[u8]) -> result<(), tcp_err_data>;
-    fn read_start() -> result<ReadPort, tcp_err_data>;
-    fn read_stop(-read_port: ReadPort) -> result<(), tcp_err_data>;
+    fn write_(data: ~[u8]) -> result<(), tcp_err_data>;
+    fn read_start_() -> result<ReadPort, tcp_err_data>;
+    fn read_stop_(-read_port: ReadPort) -> result<(), tcp_err_data>;
 }
 
 trait ConnectionFactory<C: Connection> {
@@ -22,17 +22,17 @@ trait ConnectionFactory<C: Connection> {
 }
 
 impl of Connection for tcp_socket {
-    fn write(data: ~[u8]) -> result<(), tcp_err_data> {
+    fn write_(data: ~[u8]) -> result<(), tcp_err_data> {
         import std::net::tcp::tcp_socket;
         self.write(data)
     }
 
-    fn read_start() -> result<ReadPort, tcp_err_data> {
+    fn read_start_() -> result<ReadPort, tcp_err_data> {
         import std::net::tcp::tcp_socket;
         self.read_start()
     }
 
-    fn read_stop(-read_port: ReadPort) -> result<(), tcp_err_data> {
+    fn read_stop_(-read_port: ReadPort) -> result<(), tcp_err_data> {
         import std::net::tcp::tcp_socket;
         self.read_stop(read_port)
     }
@@ -58,15 +58,15 @@ type MockConnection = {
 };
 
 impl of Connection for MockConnection {
-    fn write(data: ~[u8]) -> result<(), tcp_err_data> {
+    fn write_(data: ~[u8]) -> result<(), tcp_err_data> {
         self.write_fn(data)
     }
 
-    fn read_start() -> result<ReadPort, tcp_err_data> {
+    fn read_start_() -> result<ReadPort, tcp_err_data> {
         self.read_start_fn()
     }
 
-    fn read_stop(-read_port: ReadPort) -> result<(), tcp_err_data> {
+    fn read_stop_(-read_port: ReadPort) -> result<(), tcp_err_data> {
         self.read_stop_fn(read_port)
     }
 }

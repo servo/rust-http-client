@@ -1,5 +1,5 @@
 enum ResponseHeader {
-    Unknown(str)
+    Unknown(~str)
 }
 
 type ResponseHeaderBlock = {

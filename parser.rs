@@ -59,7 +59,7 @@ class Parser {
 
     fn execute(data: &[u8], callbacks: &ParserCallbacks) {
         self.http_parser.data = addr_of(*callbacks) as *c_void;
-        do vec::as_buf(data) |buf| {
+        do vec::as_buf(data) |buf, _i| {
             http_parser_execute(addr_of(self.http_parser),
                                 addr_of(self.settings),
                                 buf as *c_char, data.len() as size_t);

@@ -20,8 +20,8 @@ const timeout: uint = 2000;
 A quick hack URI type
 */
 type Uri = {
-    host: str,
-    path: str
+    host: ~str,
+    path: ~str
 };
 
 /// HTTP status codes
@@ -44,7 +44,7 @@ enum RequestEvent {
     Error(RequestError)
 }
 
-type DnsResolver = fn@(host: str) -> result<~[ip_addr], ip_get_addr_err>;
+type DnsResolver = fn@(host: ~str) -> result<~[ip_addr], ip_get_addr_err>;
 
 fn uv_dns_resolver() -> DnsResolver {
     |host| {
@@ -129,7 +129,7 @@ class HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
                                   self.uri.path, self.uri.host);
         #debug("http_client: writing request header: %?", request_header);
         let request_header_bytes = str::bytes(request_header);
-        alt socket.write(request_header_bytes) {
+        alt socket.write_(request_header_bytes) {
           result::ok(*) { }
           result::err(e) {
             // FIXME: Need test
@@ -139,7 +139,7 @@ class HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
         }
 
         let read_port = {
-            let read_port = socket.read_start();
+            let read_port = socket.read_start_();
             if read_port.is_ok() {
                 result::unwrap(read_port)
             } else {
@@ -174,19 +174,19 @@ class HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
 
                 // This method of detecting EOF is lame
                 alt next_data {
-                  result::err({err_name: "EOF", _}) {
+                  result::err({err_name: ~"EOF", _}) {
                     break;
                   }
                   _ {
                     // FIXME: Need tests and error handling
-                    socket.read_stop(read_port);
+                    socket.read_stop_(read_port);
                     cb(Error(ErrorMisc));
                     ret;
                   }
                 }
             }
         }
-        socket.read_stop(read_port);
+        socket.read_stop_(read_port);
     }
 
     fn on_message_begin() -> bool {
@@ -236,8 +236,8 @@ fn sequence<C: Connection, CF: ConnectionFactory<C>>(request: HttpRequest<C, CF>
 #[test]
 fn test_resolve_error() {
     let uri = {
-        host: "example.com_not_real",
-        path: "/"
+        host: ~"example.com_not_real",
+        path: ~"/"
     };
 
     let request = uv_http_request(uri);
@@ -253,8 +253,8 @@ fn test_connect_error() {
     let uri = {
         // This address is invalid because the first octet
         // of a class A address cannot be 0
-        host: "0.42.42.42",
-        path: "/"
+        host: ~"0.42.42.42",
+        path: ~"/"
     };
 
     let request = uv_http_request(uri);
@@ -268,8 +268,8 @@ fn test_connect_error() {
 #[test]
 fn test_connect_success() {
     let uri = {
-        host: "example.com",
-        path: "/"
+        host: ~"example.com",
+        path: ~"/"
     };
 
     let request = uv_http_request(uri);
@@ -287,8 +287,8 @@ fn test_connect_success() {
 #[ignore(reason = "ICE")]
 fn test_simple_response() {
     let uri = {
-        host: "whatever",
-        path: "/"
+        host: ~"whatever",
+        path: ~"/"
     };
 
     let mock_connection: MockConnection = {
@@ -297,7 +297,7 @@ fn test_simple_response() {
             let port = port();
             let chan = port.chan();
 
-            let response = "HTTP/1.0 200 OK\
+            let response = ~"HTTP/1.0 200 OK\
                             \
                             Test";
             chan.send(ok(str::bytes(response)));
