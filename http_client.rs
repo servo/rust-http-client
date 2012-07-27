@@ -74,39 +74,9 @@ class HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
 
     fn begin(cb: fn(+RequestEvent)) {
         #debug("http_client: looking up uri %?", self.uri);
-        let ip_addr = {
-            let ip_addrs = self.resolve_ip_addr(self.uri.host);
-            if ip_addrs.is_ok() {
-                let ip_addrs = result::unwrap(ip_addrs);
-                // FIXME: This log crashes
-                //#debug("http_client: got IP addresses for %?: %?", self.uri, ip_addrs);
-                if ip_addrs.is_not_empty() {
-                    // FIXME: Which address should we really pick?
-                    let best_ip = do ip_addrs.find |ip| {
-                        alt ip {
-                          ipv4(*) { true }
-                          ipv6(*) { false }
-                        }
-                    };
-
-                    if best_ip.is_some() {
-                        option::unwrap(best_ip)
-                    } else {
-                        // FIXME: Need test
-                        cb(Error(ErrorMisc));
-                        ret;
-                    }
-                } else {
-                    #debug("http_client: got no IP addresses for %?", self.uri);
-                    // FIXME: Need test
-                    cb(Error(ErrorMisc));
-                    ret;
-                }
-            } else {
-                #debug("http_client: DNS lookup failure: %?", ip_addrs.get_err());
-                cb(Error(ErrorDnsResolution));
-                ret;
-            }
+        let ip_addr = alt self.get_ip() {
+          ok(ip_addr) { ip_addr }
+          err(e) { cb(Error(e)); ret }
         };
 
         #debug("http_client: using IP %? for %?", format_addr(ip_addr), self.uri);
@@ -187,6 +157,38 @@ class HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
             }
         }
         socket.read_stop_(read_port);
+    }
+
+    fn get_ip() -> result<ip_addr, RequestError> {
+        let ip_addrs = self.resolve_ip_addr(self.uri.host);
+        if ip_addrs.is_ok() {
+            let ip_addrs = result::unwrap(ip_addrs);
+            // FIXME: This log crashes
+            //#debug("http_client: got IP addresses for %?: %?", self.uri, ip_addrs);
+            if ip_addrs.is_not_empty() {
+                // FIXME: Which address should we really pick?
+                let best_ip = do ip_addrs.find |ip| {
+                    alt ip {
+                      ipv4(*) { true }
+                      ipv6(*) { false }
+                    }
+                };
+
+                if best_ip.is_some() {
+                    ret ok(option::unwrap(best_ip));
+                } else {
+                    // FIXME: Need test
+                    ret err(ErrorMisc);
+                }
+            } else {
+                #debug("http_client: got no IP addresses for %?", self.uri);
+                // FIXME: Need test
+                ret err(ErrorMisc);
+            }
+        } else {
+            #debug("http_client: DNS lookup failure: %?", ip_addrs.get_err());
+            ret err(ErrorDnsResolution);
+        }
     }
 
     fn on_message_begin() -> bool {
