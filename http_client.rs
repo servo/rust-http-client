@@ -136,7 +136,11 @@ class HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
 
             if next_data.is_ok() {
                 let next_data = result::unwrap(next_data);
-                self.parser.execute(next_data, &callbacks);
+                let bytes_parsed = self.parser.execute(next_data, &callbacks);
+                if bytes_parsed != next_data.len() {
+                    // FIXME: Need tests
+                    fail ~"http parse failure";
+                }
                 let the_payload = Payload(~mut some(next_data));
                 cb(the_payload);
             } else {
@@ -145,6 +149,7 @@ class HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
                 // This method of detecting EOF is lame
                 alt next_data {
                   result::err({err_name: ~"EOF", _}) {
+                    self.parser.execute(~[], &callbacks);
                     break;
                   }
                   _ {
