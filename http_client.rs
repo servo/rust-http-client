@@ -27,6 +27,7 @@ type Uri = {
 /// HTTP status codes
 enum StatusCode {
     StatusOk = 200,
+    StatusFound = 302,
     StatusUnknown
 }
 
@@ -63,16 +64,17 @@ class HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
     let connection_factory: CF;
     let uri: Uri;
     let parser: Parser;
+    let mut cb: fn@(+RequestEvent);
 
     new(resolver: DnsResolver, +connection_factory: CF, +uri: Uri) {
         self.resolve_ip_addr = resolver;
         self.connection_factory = connection_factory;
         self.uri = uri;
-
         self.parser = Parser();
+        self.cb = |_event| { };
     }
 
-    fn begin(cb: fn(+RequestEvent)) {
+    fn begin(cb: fn@(+RequestEvent)) {
         #debug("http_client: looking up uri %?", self.uri);
         let ip_addr = alt self.get_ip() {
           ok(ip_addr) { ip_addr }
@@ -131,18 +133,20 @@ class HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
             on_message_complete: || (*unsafe_self).on_message_complete()
         }};
 
+        // Set the callback used by the parser event handlers
+        self.cb = cb;
+
         loop {
             let next_data = read_port.recv();
 
             if next_data.is_ok() {
-                let next_data = result::unwrap(next_data);
+                let next_data = next_data.get();
+                #debug("data: %?", next_data);
                 let bytes_parsed = self.parser.execute(next_data, &callbacks);
                 if bytes_parsed != next_data.len() {
                     // FIXME: Need tests
                     fail ~"http parse failure";
                 }
-                let the_payload = Payload(~mut some(next_data));
-                cb(the_payload);
             } else {
                 #debug("http_client: read error: %?", next_data);
 
@@ -207,12 +211,14 @@ class HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
     }
 
     fn on_header_field(+data: ~[u8]) -> bool {
-        #debug("on_header_field");
+        let header_field = str::from_bytes(data);
+        #debug("on_header_field: %?", header_field);
         true
     }
 
     fn on_header_value(+data: ~[u8]) -> bool {
-        #debug("on_header_value");
+        let header_value = str::from_bytes(data);
+        #debug("on_header_value: %?", header_value);
         true
     }
 
@@ -223,6 +229,8 @@ class HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
 
     fn on_body(+data: ~[u8]) -> bool {
         #debug("on_body");
+        let the_payload = Payload(~mut some(data));
+        self.cb(the_payload);
         true
     }
 
@@ -233,11 +241,11 @@ class HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
 }
 
 fn sequence<C: Connection, CF: ConnectionFactory<C>>(request: HttpRequest<C, CF>) -> ~[RequestEvent] {
-    let mut events = ~[];
+    let events = @mut ~[];
     do request.begin |event| {
-        vec::push(events, event)
+        vec::push(*events, event)
     }
-    ret events;
+    ret *events;
 }
 
 #[test]
@@ -288,6 +296,32 @@ fn test_connect_success() {
           _ { }
         }
     }
+}
+
+#[test]
+fn test_simple_body() {
+    let uri = {
+        host: ~"www.iana.org",
+        path: ~"/"
+    };
+
+    let request = uv_http_request(uri);
+    let events = sequence(request);
+
+    let mut found = false;
+
+    for events.each |ev| {
+        alt ev {
+          Payload(value) {
+            if str::from_bytes(value.get()).contains(~"DOCTYPE html") {
+                found = true
+            }
+          }
+          _ { }
+        }
+    }
+
+    assert found;
 }
 
 #[test]

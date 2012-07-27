@@ -65,6 +65,10 @@ class Parser {
                                 buf as *c_char, data.len() as size_t) as uint
         }
     }
+
+    fn status_code() -> uint {
+        self.http_parser.status_code as uint
+    }
 }
 
 fn callbacks(http_parser: *http_parser) -> *ParserCallbacks {
