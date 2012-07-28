@@ -1,3 +1,4 @@
+import to_str::to_str;
 import ptr::addr_of;
 import comm::{port, chan, methods};
 import result::{result, ok, err};
@@ -6,6 +7,8 @@ import std::net::ip::{
     ip_get_addr_err
 };
 import std::net::tcp::{connect, tcp_socket};
+import std::net::url;
+import std::net::url::url;
 import std::uv_global_loop;
 import comm::{methods};
 import connection::{
@@ -15,14 +18,6 @@ import connection::{
 import parser::{Parser, ParserCallbacks};
 
 const timeout: uint = 2000;
-
-/**
-A quick hack URI type
-*/
-type Uri = {
-    host: ~str,
-    path: ~str
-};
 
 /// HTTP status codes
 enum StatusCode {
@@ -54,34 +49,34 @@ fn uv_dns_resolver() -> DnsResolver {
     }
 }
 
-fn uv_http_request(+uri: Uri) -> HttpRequest<tcp_socket, UvConnectionFactory> {
-    HttpRequest(uv_dns_resolver(), UvConnectionFactory, uri)
+fn uv_http_request(+url: url) -> HttpRequest<tcp_socket, UvConnectionFactory> {
+    HttpRequest(uv_dns_resolver(), UvConnectionFactory, url)
 }
 
 class HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
 
     let resolve_ip_addr: DnsResolver;
     let connection_factory: CF;
-    let uri: Uri;
+    let url: url;
     let parser: Parser;
     let mut cb: fn@(+RequestEvent);
 
-    new(resolver: DnsResolver, +connection_factory: CF, +uri: Uri) {
+    new(resolver: DnsResolver, +connection_factory: CF, +url: url) {
         self.resolve_ip_addr = resolver;
         self.connection_factory = connection_factory;
-        self.uri = uri;
+        self.url = url;
         self.parser = Parser();
         self.cb = |_event| { };
     }
 
     fn begin(cb: fn@(+RequestEvent)) {
-        #debug("http_client: looking up uri %?", self.uri);
+        #debug("http_client: looking up url %?", self.url.to_str());
         let ip_addr = alt self.get_ip() {
           ok(ip_addr) { ip_addr }
           err(e) { cb(Error(e)); ret }
         };
 
-        #debug("http_client: using IP %? for %?", format_addr(ip_addr), self.uri);
+        #debug("http_client: using IP %? for %?", format_addr(ip_addr), self.url.to_str());
 
         let socket = {
             #debug("http_client: connecting to %?", ip_addr);
@@ -98,7 +93,7 @@ class HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
         #debug("http_client: got socket for %?", ip_addr);
 
         let request_header = #fmt("GET %s HTTP/1.0\u000D\u000AHost: %s\u000D\u000A\u000D\u000A",
-                                  self.uri.path, self.uri.host);
+                                  self.url.path, self.url.host);
         #debug("http_client: writing request header: %?", request_header);
         let request_header_bytes = str::bytes(request_header);
         alt socket.write_(request_header_bytes) {
@@ -169,11 +164,11 @@ class HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
     }
 
     fn get_ip() -> result<ip_addr, RequestError> {
-        let ip_addrs = self.resolve_ip_addr(self.uri.host);
+        let ip_addrs = self.resolve_ip_addr(self.url.host);
         if ip_addrs.is_ok() {
             let ip_addrs = result::unwrap(ip_addrs);
             // FIXME: This log crashes
-            //#debug("http_client: got IP addresses for %?: %?", self.uri, ip_addrs);
+            //#debug("http_client: got IP addresses for %?: %?", self.url, ip_addrs);
             if ip_addrs.is_not_empty() {
                 // FIXME: Which address should we really pick?
                 let best_ip = do ip_addrs.find |ip| {
@@ -190,7 +185,7 @@ class HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
                     ret err(ErrorMisc);
                 }
             } else {
-                #debug("http_client: got no IP addresses for %?", self.uri);
+                #debug("http_client: got no IP addresses for %?", self.url);
                 // FIXME: Need test
                 ret err(ErrorMisc);
             }
@@ -250,12 +245,8 @@ fn sequence<C: Connection, CF: ConnectionFactory<C>>(request: HttpRequest<C, CF>
 
 #[test]
 fn test_resolve_error() {
-    let uri = {
-        host: ~"example.com_not_real",
-        path: ~"/"
-    };
-
-    let request = uv_http_request(uri);
+    let url = url::from_str(~"http://example.com_not_real/").get();
+    let request = uv_http_request(url);
     let events = sequence(request);
 
     assert events == ~[
@@ -265,14 +256,10 @@ fn test_resolve_error() {
 
 #[test]
 fn test_connect_error() {
-    let uri = {
-        // This address is invalid because the first octet
-        // of a class A address cannot be 0
-        host: ~"0.42.42.42",
-        path: ~"/"
-    };
-
-    let request = uv_http_request(uri);
+    // This address is invalid because the first octet
+    // of a class A address cannot be 0
+    let url = url::from_str(~"http://0.42.42.42/").get();
+    let request = uv_http_request(url);
     let events = sequence(request);
 
     assert events == ~[
@@ -282,12 +269,8 @@ fn test_connect_error() {
 
 #[test]
 fn test_connect_success() {
-    let uri = {
-        host: ~"example.com",
-        path: ~"/"
-    };
-
-    let request = uv_http_request(uri);
+    let url = url::from_str(~"http://example.com/").get();
+    let request = uv_http_request(url);
     let events = sequence(request);
 
     for events.each |ev| {
@@ -300,12 +283,8 @@ fn test_connect_success() {
 
 #[test]
 fn test_simple_body() {
-    let uri = {
-        host: ~"www.iana.org",
-        path: ~"/"
-    };
-
-    let request = uv_http_request(uri);
+    let url = url::from_str(~"http://www.iana.org/").get();
+    let request = uv_http_request(url);
     let events = sequence(request);
 
     let mut found = false;
@@ -327,11 +306,7 @@ fn test_simple_body() {
 #[test]
 #[ignore(reason = "ICE")]
 fn test_simple_response() {
-    let uri = {
-        host: ~"whatever",
-        path: ~"/"
-    };
-
+    let url = url::from_str(~"http://whatever/").get();
     let mock_connection: MockConnection = {
         write_fn: |data| { ok(()) },
         read_start_fn: || {
