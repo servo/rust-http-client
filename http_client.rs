@@ -16,6 +16,7 @@ import connection::{
     MockConnection, MockConnectionFactory
 };
 import parser::{Parser, ParserCallbacks};
+import request::build_request;
 
 const timeout: uint = 2000;
 
@@ -92,8 +93,7 @@ class HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
 
         #debug("http_client: got socket for %?", ip_addr);
 
-        let request_header = #fmt("GET %s HTTP/1.0\u000D\u000AHost: %s\u000D\u000A\u000D\u000A",
-                                  self.url.path, self.url.host);
+        let request_header = build_request(self.url);
         #debug("http_client: writing request header: %?", request_header);
         let request_header_bytes = str::bytes(request_header);
         alt socket.write_(request_header_bytes) {

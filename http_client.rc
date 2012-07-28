@@ -16,3 +16,4 @@ mod connection;
 mod parser;
 mod response_headers;
 mod http_parser;
+mod request;
