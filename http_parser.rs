@@ -461,16 +461,6 @@ type struct_unnamed1 = {
 #[link_args = "-L. -lhttp_parser"]
 extern mod bindgen {
 
-fn select(++__nfds: c_int, ++__readfds: *fd_set, ++__writefds: *fd_set, ++__exceptfds: *fd_set, ++__timeout: *struct_timeval) -> c_int;
-
-fn pselect(++__nfds: c_int, ++__readfds: *fd_set, ++__writefds: *fd_set, ++__exceptfds: *fd_set, ++__timeout: *struct_timespec, ++__sigmask: *__sigset_t) -> c_int;
-
-fn gnu_dev_major(++__dev: c_ulonglong) -> c_uint;
-
-fn gnu_dev_minor(++__dev: c_ulonglong) -> c_uint;
-
-fn gnu_dev_makedev(++__major: c_uint, ++__minor: c_uint) -> c_ulonglong;
-
 fn http_parser_init(++parser: *http_parser, ++_type: enum_http_parser_type);
 
 fn http_parser_execute(++parser: *http_parser, ++settings: *http_parser_settings, ++data: *c_char, ++len: size_t) -> size_t;
