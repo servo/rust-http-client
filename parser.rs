@@ -74,7 +74,7 @@ class Parser {
 fn callbacks(http_parser: *http_parser) -> *ParserCallbacks {
     unsafe {
         assert (*http_parser).data.is_not_null();
-        ret (*http_parser).data as *ParserCallbacks;
+        return (*http_parser).data as *ParserCallbacks;
     }
 }
 

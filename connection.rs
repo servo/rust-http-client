@@ -47,7 +47,7 @@ impl of ConnectionFactory<tcp_socket> for UvConnectionFactory {
         import std::uv_global_loop;
         import std::net::tcp::connect;
         let iotask = uv_global_loop::get();
-        ret connect(copy ip, port, iotask);
+        return connect(copy ip, port, iotask);
     }
 }
 
