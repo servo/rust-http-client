@@ -74,7 +74,7 @@ class HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
         #debug("http_client: looking up url %?", self.url.to_str());
         let ip_addr = alt self.get_ip() {
           ok(ip_addr) { ip_addr }
-          err(e) { cb(Error(e)); ret }
+          err(e) { cb(Error(e)); return }
         };
 
         #debug("http_client: using IP %? for %?", format_addr(ip_addr), self.url.to_str());
@@ -87,7 +87,7 @@ class HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
             } else {
                 #debug("http_client: unable to connect to %?: %?", ip_addr, socket);
                 cb(Error(ErrorConnect));
-                ret;
+                return;
             }
         };
 
@@ -101,7 +101,7 @@ class HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
           result::err(e) {
             // FIXME: Need test
             cb(Error(ErrorMisc));
-            ret;
+            return;
           }
         }
 
@@ -111,7 +111,7 @@ class HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
                 result::unwrap(read_port)
             } else {
                 cb(Error(ErrorMisc));
-                ret;
+                return;
             }
         };
 
@@ -155,7 +155,7 @@ class HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
                     // FIXME: Need tests and error handling
                     socket.read_stop_(read_port);
                     cb(Error(ErrorMisc));
-                    ret;
+                    return;
                   }
                 }
             }
@@ -179,19 +179,19 @@ class HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
                 };
 
                 if best_ip.is_some() {
-                    ret ok(option::unwrap(best_ip));
+                    return ok(option::unwrap(best_ip));
                 } else {
                     // FIXME: Need test
-                    ret err(ErrorMisc);
+                    return err(ErrorMisc);
                 }
             } else {
                 #debug("http_client: got no IP addresses for %?", self.url);
                 // FIXME: Need test
-                ret err(ErrorMisc);
+                return err(ErrorMisc);
             }
         } else {
             #debug("http_client: DNS lookup failure: %?", ip_addrs.get_err());
-            ret err(ErrorDnsResolution);
+            return err(ErrorDnsResolution);
         }
     }
 
@@ -240,7 +240,7 @@ fn sequence<C: Connection, CF: ConnectionFactory<C>>(request: HttpRequest<C, CF>
     do request.begin |event| {
         vec::push(*events, event)
     }
-    ret *events;
+    return *events;
 }
 
 #[test]
