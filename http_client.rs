@@ -54,6 +54,7 @@ fn uv_http_request(+url: url) -> HttpRequest<tcp_socket, UvConnectionFactory> {
     HttpRequest(uv_dns_resolver(), UvConnectionFactory, url)
 }
 
+#[allow(non_implicitly_copyable_typarams)]
 class HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
 
     let resolve_ip_addr: DnsResolver;
@@ -73,8 +74,8 @@ class HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
     fn begin(cb: fn@(+RequestEvent)) {
         #debug("http_client: looking up url %?", self.url.to_str());
         let ip_addr = alt self.get_ip() {
-          ok(ip_addr) { ip_addr }
-          err(e) { cb(Error(e)); return }
+          ok(ip_addr) => { copy ip_addr }
+          err(e) => { cb(Error(e)); return }
         };
 
         #debug("http_client: using IP %? for %?", format_addr(ip_addr), self.url.to_str());
@@ -97,8 +98,8 @@ class HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
         #debug("http_client: writing request header: %?", request_header);
         let request_header_bytes = str::bytes(request_header);
         alt socket.write_(request_header_bytes) {
-          result::ok(*) { }
-          result::err(e) {
+          result::ok(*) => { }
+          result::err(e) => {
             // FIXME: Need test
             cb(Error(ErrorMisc));
             return;
@@ -147,11 +148,11 @@ class HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
 
                 // This method of detecting EOF is lame
                 alt next_data {
-                  result::err({err_name: ~"EOF", _}) {
+                  result::err({err_name: ~"EOF", _}) => {
                     self.parser.execute(~[], &callbacks);
                     break;
                   }
-                  _ {
+                  _ => {
                     // FIXME: Need tests and error handling
                     socket.read_stop_(read_port);
                     cb(Error(ErrorMisc));
@@ -173,8 +174,8 @@ class HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
                 // FIXME: Which address should we really pick?
                 let best_ip = do ip_addrs.find |ip| {
                     alt ip {
-                      ipv4(*) { true }
-                      ipv6(*) { false }
+                      ipv4(*) => { true }
+                      ipv6(*) => { false }
                     }
                 };
 
@@ -200,7 +201,7 @@ class HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
         true
     }
 
-    fn on_url(+data: ~[u8]) -> bool {
+    fn on_url(+_data: ~[u8]) -> bool {
         #debug("on_url");
         true
     }
@@ -235,7 +236,10 @@ class HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
     }
 }
 
-fn sequence<C: Connection, CF: ConnectionFactory<C>>(request: HttpRequest<C, CF>) -> ~[RequestEvent] {
+#[allow(non_implicitly_copyable_typarams)]
+fn sequence<C: Connection, CF: ConnectionFactory<C>>(request: HttpRequest<C, CF>) -> 
+    ~[RequestEvent] {
+    
     let events = @mut ~[];
     do request.begin |event| {
         vec::push(*events, event)
@@ -244,6 +248,7 @@ fn sequence<C: Connection, CF: ConnectionFactory<C>>(request: HttpRequest<C, CF>
 }
 
 #[test]
+#[allow(non_implicitly_copyable_typarams)]
 fn test_resolve_error() {
     let url = url::from_str(~"http://example.com_not_real/").get();
     let request = uv_http_request(url);
@@ -255,6 +260,7 @@ fn test_resolve_error() {
 }
 
 #[test]
+#[allow(non_implicitly_copyable_typarams)]
 fn test_connect_error() {
     // This address is invalid because the first octet
     // of a class A address cannot be 0
@@ -268,6 +274,7 @@ fn test_connect_error() {
 }
 
 #[test]
+#[allow(non_implicitly_copyable_typarams)]
 fn test_connect_success() {
     let url = url::from_str(~"http://example.com/").get();
     let request = uv_http_request(url);
@@ -275,13 +282,14 @@ fn test_connect_success() {
 
     for events.each |ev| {
         alt ev {
-          Error(*) { fail }
-          _ { }
+          Error(*) => { fail }
+          _ => { }
         }
     }
 }
 
 #[test]
+#[allow(non_implicitly_copyable_typarams)]
 fn test_simple_body() {
     let url = url::from_str(~"http://www.iana.org/").get();
     let request = uv_http_request(url);
@@ -291,12 +299,12 @@ fn test_simple_body() {
 
     for events.each |ev| {
         alt ev {
-          Payload(value) {
+          Payload(value) => {
             if str::from_bytes(value.get()).contains(~"DOCTYPE html") {
                 found = true
             }
           }
-          _ { }
+          _ => { }
         }
     }
 
@@ -305,10 +313,11 @@ fn test_simple_body() {
 
 #[test]
 #[ignore(reason = "ICE")]
+#[allow(non_implicitly_copyable_typarams)]
 fn test_simple_response() {
-    let url = url::from_str(~"http://whatever/").get();
-    let mock_connection: MockConnection = {
-        write_fn: |data| { ok(()) },
+    let _url = url::from_str(~"http://whatever/").get();
+    let _mock_connection: MockConnection = {
+        write_fn: |_data| { ok(()) },
         read_start_fn: || {
             let port = port();
             let chan = port.chan();
@@ -323,8 +332,8 @@ fn test_simple_response() {
         read_stop_fn: |_port| { ok(()) }
     };
 
-    let mock_connection_factory: MockConnectionFactory = {
-        connect_fn: |ip, port| {
+    let _mock_connection_factory: MockConnectionFactory = {
+        connect_fn: |_ip, _port| {
 
             // FIXME this doesn't work
             fail;//ok(mock_connection)
