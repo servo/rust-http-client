@@ -73,7 +73,7 @@ class HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
 
     fn begin(cb: fn@(+RequestEvent)) {
         #debug("http_client: looking up url %?", self.url.to_str());
-        let ip_addr = alt self.get_ip() {
+        let ip_addr = match self.get_ip() {
           ok(ip_addr) => { copy ip_addr }
           err(e) => { cb(Error(e)); return }
         };
@@ -97,7 +97,7 @@ class HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
         let request_header = build_request(self.url);
         #debug("http_client: writing request header: %?", request_header);
         let request_header_bytes = str::bytes(request_header);
-        alt socket.write_(request_header_bytes) {
+        match socket.write_(request_header_bytes) {
           result::ok(*) => { }
           result::err(e) => {
             // FIXME: Need test
@@ -147,7 +147,7 @@ class HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
                 #debug("http_client: read error: %?", next_data);
 
                 // This method of detecting EOF is lame
-                alt next_data {
+                match next_data {
                   result::err({err_name: ~"EOF", _}) => {
                     self.parser.execute(~[], &callbacks);
                     break;
@@ -173,7 +173,7 @@ class HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
             if ip_addrs.is_not_empty() {
                 // FIXME: Which address should we really pick?
                 let best_ip = do ip_addrs.find |ip| {
-                    alt ip {
+                    match ip {
                       ipv4(*) => { true }
                       ipv6(*) => { false }
                     }
@@ -281,7 +281,7 @@ fn test_connect_success() {
     let events = sequence(request);
 
     for events.each |ev| {
-        alt ev {
+        match ev {
           Error(*) => { fail }
           _ => { }
         }
@@ -298,7 +298,7 @@ fn test_simple_body() {
     let mut found = false;
 
     for events.each |ev| {
-        alt ev {
+        match ev {
           Payload(value) => {
             if str::from_bytes(value.get()).contains(~"DOCTYPE html") {
                 found = true
