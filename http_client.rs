@@ -1,6 +1,6 @@
 import to_str::to_str;
 import ptr::addr_of;
-import comm::{port, chan, methods};
+import comm::{port, chan};
 import result::{result, ok, err};
 import std::net::ip::{
     get_addr, format_addr, ipv4, ipv6, ip_addr,
@@ -10,7 +10,6 @@ import std::net::tcp::{connect, tcp_socket};
 import std::net::url;
 import std::net::url::url;
 import std::uv_global_loop;
-import comm::{methods};
 import connection::{
     Connection, ConnectionFactory, UvConnectionFactory,
     MockConnection, MockConnectionFactory

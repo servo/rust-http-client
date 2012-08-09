@@ -21,7 +21,7 @@ trait ConnectionFactory<C: Connection> {
     fn connect(ip: ip_addr, port: uint) -> result<C, tcp_connect_err_data>;
 }
 
-impl of Connection for tcp_socket {
+impl tcp_socket : Connection {
     fn write_(data: ~[u8]) -> result<(), tcp_err_data> {
         import std::net::tcp::tcp_socket;
         self.write(data)
@@ -42,7 +42,7 @@ enum UvConnectionFactory {
     UvConnectionFactory
 }
 
-impl of ConnectionFactory<tcp_socket> for UvConnectionFactory {
+impl UvConnectionFactory : ConnectionFactory<tcp_socket> {
     fn connect(ip: ip_addr, port: uint) -> result<tcp_socket, tcp_connect_err_data> {
         import std::uv_global_loop;
         import std::net::tcp::connect;
@@ -57,7 +57,7 @@ type MockConnection = {
     read_stop_fn: fn@(-ReadPort) -> result<(), tcp_err_data>
 };
 
-impl of Connection for MockConnection {
+impl MockConnection : Connection {
     fn write_(data: ~[u8]) -> result<(), tcp_err_data> {
         self.write_fn(data)
     }
@@ -75,7 +75,7 @@ type MockConnectionFactory = {
     connect_fn: fn@(ip_addr, uint) -> result<MockConnection, tcp_connect_err_data>
 };
 
-impl of ConnectionFactory<MockConnection> for MockConnectionFactory {
+impl MockConnectionFactory : ConnectionFactory<MockConnection> {
     fn connect(ip: ip_addr, port: uint) -> result<MockConnection, tcp_connect_err_data> {
         self.connect_fn(ip, port)
     }
