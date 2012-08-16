@@ -1,9 +1,9 @@
-import comm::port;
+import comm::{Port, port};
 import result::result;
 import std::net::tcp::{tcp_err_data, tcp_connect_err_data};
 import std::net::ip::ip_addr;
 
-type ReadPort = port<result<~[u8], tcp_err_data>>;
+type ReadPort = Port<result<~[u8], tcp_err_data>>;
 
 /**
 An abstract client socket connection. This mirrors the bits
