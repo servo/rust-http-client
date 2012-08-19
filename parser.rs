@@ -24,7 +24,7 @@ type ParserCallbacks = {
     on_message_complete: HttpCallback
 };
 
-class Parser {
+struct Parser {
     let mut http_parser: http_parser;
     let settings: http_parser_settings;
 

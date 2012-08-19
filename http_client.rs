@@ -54,7 +54,7 @@ fn uv_http_request(+url: url) -> HttpRequest<tcp_socket, UvConnectionFactory> {
 }
 
 #[allow(non_implicitly_copyable_typarams)]
-class HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
+struct HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
 
     let resolve_ip_addr: DnsResolver;
     let connection_factory: CF;
