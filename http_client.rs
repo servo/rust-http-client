@@ -95,7 +95,7 @@ struct HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
 
         let request_header = build_request(self.url);
         #debug("http_client: writing request header: %?", request_header);
-        let request_header_bytes = str::bytes(request_header);
+        let request_header_bytes = str::to_bytes(request_header);
         match socket.write_(request_header_bytes) {
           result::ok(*) => { }
           result::err(e) => {
@@ -324,7 +324,7 @@ fn test_simple_response() {
             let response = ~"HTTP/1.0 200 OK\
                             \
                             Test";
-            chan.send(ok(str::bytes(response)));
+            chan.send(ok(str::to_bytes(response)));
 
             ok(port)
         },
