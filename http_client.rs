@@ -1,7 +1,7 @@
 import to_str::to_str;
 import ptr::addr_of;
-import comm::{port, chan};
-import result::{result, ok, err};
+import comm::{Port, Chan};
+import result::{Result, Ok, Err};
 import std::net::ip::{
     get_addr, format_addr, ipv4, ipv6, ip_addr,
     ip_get_addr_err
@@ -36,11 +36,11 @@ enum RequestError {
 /// Request 
 enum RequestEvent {
     Status(StatusCode),
-    Payload(~mut option<~[u8]>),
+    Payload(~mut Option<~[u8]>),
     Error(RequestError)
 }
 
-type DnsResolver = fn@(host: ~str) -> result<~[ip_addr], ip_get_addr_err>;
+type DnsResolver = fn@(host: ~str) -> Result<~[ip_addr], ip_get_addr_err>;
 
 fn uv_dns_resolver() -> DnsResolver {
     |host| {
@@ -73,8 +73,8 @@ struct HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
     fn begin(cb: fn@(+RequestEvent)) {
         #debug("http_client: looking up url %?", self.url.to_str());
         let ip_addr = match self.get_ip() {
-          ok(ip_addr) => { copy ip_addr }
-          err(e) => { cb(Error(e)); return }
+          Ok(ip_addr) => { copy ip_addr }
+          Err(e) => { cb(Error(e)); return }
         };
 
         #debug("http_client: using IP %? for %?", format_addr(ip_addr), self.url.to_str());
@@ -97,8 +97,8 @@ struct HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
         #debug("http_client: writing request header: %?", request_header);
         let request_header_bytes = str::to_bytes(request_header);
         match socket.write_(request_header_bytes) {
-          result::ok(*) => { }
-          result::err(e) => {
+          result::Ok(*) => { }
+          result::Err(*) => {
             // FIXME: Need test
             cb(Error(ErrorMisc));
             return;
@@ -118,15 +118,15 @@ struct HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
         // This unsafety is unfortunate but we can't capture self
         // into shared closures
         let unsafe_self = addr_of(self);
-        let callbacks: ParserCallbacks = unsafe {{
-            on_message_begin: || (*unsafe_self).on_message_begin(),
-            on_url: |data| (*unsafe_self).on_url(data),
-            on_header_field: |data| (*unsafe_self).on_header_field(data),
-            on_header_value: |data| (*unsafe_self).on_header_value(data),
-            on_headers_complete: || (*unsafe_self).on_headers_complete(),
-            on_body: |data| (*unsafe_self).on_body(data),
-            on_message_complete: || (*unsafe_self).on_message_complete()
-        }};
+        let callbacks: ParserCallbacks = {
+            on_message_begin: || unsafe { (*unsafe_self).on_message_begin() },
+            on_url: |data| unsafe { (*unsafe_self).on_url(data) },
+            on_header_field: |data| unsafe { (*unsafe_self).on_header_field(data) },
+            on_header_value: |data| unsafe { (*unsafe_self).on_header_value(data) },
+            on_headers_complete: || unsafe { (*unsafe_self).on_headers_complete() },
+            on_body: |data| unsafe { (*unsafe_self).on_body(data) },
+            on_message_complete: || unsafe { (*unsafe_self).on_message_complete() }
+        };
 
         // Set the callback used by the parser event handlers
         self.cb = cb;
@@ -147,7 +147,7 @@ struct HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
 
                 // This method of detecting EOF is lame
                 match next_data {
-                  result::err({err_name: ~"EOF", _}) => {
+                  result::Err({err_name: ~"EOF", _}) => {
                     self.parser.execute(~[], &callbacks);
                     break;
                   }
@@ -163,7 +163,7 @@ struct HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
         socket.read_stop_(read_port);
     }
 
-    fn get_ip() -> result<ip_addr, RequestError> {
+    fn get_ip() -> Result<ip_addr, RequestError> {
         let ip_addrs = self.resolve_ip_addr(self.url.host);
         if ip_addrs.is_ok() {
             let ip_addrs = result::unwrap(ip_addrs);
@@ -179,19 +179,19 @@ struct HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
                 };
 
                 if best_ip.is_some() {
-                    return ok(option::unwrap(best_ip));
+                    return Ok(option::unwrap(best_ip));
                 } else {
                     // FIXME: Need test
-                    return err(ErrorMisc);
+                    return Err(ErrorMisc);
                 }
             } else {
                 #debug("http_client: got no IP addresses for %?", self.url);
                 // FIXME: Need test
-                return err(ErrorMisc);
+                return Err(ErrorMisc);
             }
         } else {
             #debug("http_client: DNS lookup failure: %?", ip_addrs.get_err());
-            return err(ErrorDnsResolution);
+            return Err(ErrorDnsResolution);
         }
     }
 
@@ -224,7 +224,7 @@ struct HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
 
     fn on_body(+data: ~[u8]) -> bool {
         #debug("on_body");
-        let the_payload = Payload(~mut some(data));
+        let the_payload = Payload(~mut Some(data));
         self.cb(the_payload);
         true
     }
@@ -243,7 +243,7 @@ fn sequence<C: Connection, CF: ConnectionFactory<C>>(request: HttpRequest<C, CF>
     do request.begin |event| {
         vec::push(*events, event)
     }
-    return *events;
+    return copy *events;
 }
 
 #[test]
