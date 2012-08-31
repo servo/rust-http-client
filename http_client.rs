@@ -40,6 +40,33 @@ enum RequestEvent {
     Error(RequestError)
 }
 
+impl StatusCode: cmp::Eq {
+    pure fn eq(&&other: StatusCode) -> bool {
+        self as uint == other as uint
+    }
+}
+
+impl RequestError: cmp::Eq {
+    pure fn eq(&&other: RequestError) -> bool {
+        self as uint == other as uint
+    }
+}
+
+impl RequestEvent: cmp::Eq {
+    pure fn eq(&&other: RequestEvent) -> bool {
+        // FIXME: bad copy
+        match (self, other) {
+          (Status(a), Status(b)) => a == b,
+          (Payload(a), Payload(b)) => a == b,
+          (Error(a), Error(b)) => a == b,
+
+          (Status(*), _)
+          | (Payload(*), _)
+          | (Error(*), _) => false
+        }
+    }
+}
+
 type DnsResolver = fn@(host: ~str) -> Result<~[ip_addr], ip_get_addr_err>;
 
 fn uv_dns_resolver() -> DnsResolver {
@@ -316,19 +343,19 @@ fn test_simple_body() {
 fn test_simple_response() {
     let _url = url::from_str(~"http://whatever/").get();
     let _mock_connection: MockConnection = {
-        write_fn: |_data| { ok(()) },
+        write_fn: |_data| { Ok(()) },
         read_start_fn: || {
-            let port = port();
+            let port = Port();
             let chan = port.chan();
 
             let response = ~"HTTP/1.0 200 OK\
                             \
                             Test";
-            chan.send(ok(str::to_bytes(response)));
+            chan.send(Ok(str::to_bytes(response)));
 
-            ok(port)
+            Ok(port)
         },
-        read_stop_fn: |_port| { ok(()) }
+        read_stop_fn: |_port| { Ok(()) }
     };
 
     let _mock_connection_factory: MockConnectionFactory = {
