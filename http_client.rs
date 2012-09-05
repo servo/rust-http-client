@@ -3,12 +3,11 @@ import ptr::addr_of;
 import comm::{Port, Chan};
 import result::{Result, Ok, Err};
 import std::net::ip::{
-    get_addr, format_addr, ipv4, ipv6, ip_addr,
-    ip_get_addr_err
+    get_addr, format_addr,
+    IpAddr, IpGetAddrErr, Ipv4, Ipv6
 };
-import std::net::tcp::{connect, tcp_socket};
-import std::net::url;
-import std::net::url::url;
+import std::net::tcp::{connect, TcpSocket};
+import std::net::url::Url;
 import std::uv_global_loop;
 import connection::{
     Connection, ConnectionFactory, UvConnectionFactory,
@@ -67,16 +66,16 @@ impl RequestEvent: cmp::Eq {
     }
 }
 
-type DnsResolver = fn@(host: ~str) -> Result<~[ip_addr], ip_get_addr_err>;
+type DnsResolver = fn@(host: ~str) -> Result<~[IpAddr], IpGetAddrErr>;
 
 fn uv_dns_resolver() -> DnsResolver {
-    |host| {
+    |host: ~str| {
         let iotask = uv_global_loop::get();
-        get_addr(host, iotask)
+        get_addr(host.to_str(), iotask)
     }
 }
 
-fn uv_http_request(+url: url) -> HttpRequest<tcp_socket, UvConnectionFactory> {
+fn uv_http_request(+url: Url) -> HttpRequest<TcpSocket, UvConnectionFactory> {
     HttpRequest(uv_dns_resolver(), UvConnectionFactory, url)
 }
 
@@ -85,11 +84,11 @@ struct HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
 
     let resolve_ip_addr: DnsResolver;
     let connection_factory: CF;
-    let url: url;
+    let url: Url;
     let parser: Parser;
     let mut cb: fn@(+RequestEvent);
 
-    new(resolver: DnsResolver, +connection_factory: CF, +url: url) {
+    new(resolver: DnsResolver, +connection_factory: CF, +url: Url) {
         self.resolve_ip_addr = resolver;
         self.connection_factory = connection_factory;
         self.url = url;
@@ -100,11 +99,11 @@ struct HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
     fn begin(cb: fn@(+RequestEvent)) {
         #debug("http_client: looking up url %?", self.url.to_str());
         let ip_addr = match self.get_ip() {
-          Ok(ip_addr) => { copy ip_addr }
+          Ok(addr) => { copy addr }
           Err(e) => { cb(Error(e)); return }
         };
 
-        #debug("http_client: using IP %? for %?", format_addr(ip_addr), self.url.to_str());
+        #debug("http_client: using IP %? for %?", format_addr(&ip_addr), self.url.to_str());
 
         let socket = {
             #debug("http_client: connecting to %?", ip_addr);
@@ -190,7 +189,7 @@ struct HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
         socket.read_stop_(read_port);
     }
 
-    fn get_ip() -> Result<ip_addr, RequestError> {
+    fn get_ip() -> Result<IpAddr, RequestError> {
         let ip_addrs = self.resolve_ip_addr(self.url.host);
         if ip_addrs.is_ok() {
             let ip_addrs = result::unwrap(ip_addrs);
@@ -200,8 +199,8 @@ struct HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
                 // FIXME: Which address should we really pick?
                 let best_ip = do ip_addrs.find |ip| {
                     match ip {
-                      ipv4(*) => { true }
-                      ipv6(*) => { false }
+                      Ipv4(*) => { true }
+                      Ipv6(*) => { false }
                     }
                 };
 

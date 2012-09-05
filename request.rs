@@ -1,9 +1,8 @@
 export build_request;
 
-import std::net::url;
-import std::net::url::url;
+import std::net::url::Url;
 
-fn build_request(url: url) -> ~str {
+fn build_request(url: Url) -> ~str {
 
     let host = copy url.host;
     let path = if url.path.is_not_empty() { copy url.path } else { ~"/" };

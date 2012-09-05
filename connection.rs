@@ -1,38 +1,38 @@
 import comm::Port;
-import std::net::tcp::{tcp_err_data, tcp_connect_err_data};
-import std::net::ip::ip_addr;
+import std::net::tcp::{TcpErrData, TcpConnectErrData};
+import std::net::ip::IpAddr;
 
-type ReadPort = Port<Result<~[u8], tcp_err_data>>;
+type ReadPort = Port<Result<~[u8], TcpErrData>>;
 
 /**
 An abstract client socket connection. This mirrors the bits
-of the net::tcp::tcp_socket interface that we care about
+of the net::tcp::TcpSocket interface that we care about
 while letting us have additional implementations for
 mocking
 */
 trait Connection {
-    fn write_(data: ~[u8]) -> Result<(), tcp_err_data>;
-    fn read_start_() -> Result<ReadPort, tcp_err_data>;
-    fn read_stop_(-read_port: ReadPort) -> Result<(), tcp_err_data>;
+    fn write_(data: ~[u8]) -> Result<(), TcpErrData>;
+    fn read_start_() -> Result<ReadPort, TcpErrData>;
+    fn read_stop_(-read_port: ReadPort) -> Result<(), TcpErrData>;
 }
 
 trait ConnectionFactory<C: Connection> {
-    fn connect(ip: ip_addr, port: uint) -> Result<C, tcp_connect_err_data>;
+    fn connect(ip: IpAddr, port: uint) -> Result<C, TcpConnectErrData>;
 }
 
-impl tcp_socket : Connection {
-    fn write_(data: ~[u8]) -> Result<(), tcp_err_data> {
-        import std::net::tcp::tcp_socket;
+impl TcpSocket : Connection {
+    fn write_(data: ~[u8]) -> Result<(), TcpErrData> {
+        import std::net::tcp::TcpSocket;
         self.write(data)
     }
 
-    fn read_start_() -> Result<ReadPort, tcp_err_data> {
-        import std::net::tcp::tcp_socket;
+    fn read_start_() -> Result<ReadPort, TcpErrData> {
+        import std::net::tcp::TcpSocket;
         self.read_start()
     }
 
-    fn read_stop_(-read_port: ReadPort) -> Result<(), tcp_err_data> {
-        import std::net::tcp::tcp_socket;
+    fn read_stop_(-read_port: ReadPort) -> Result<(), TcpErrData> {
+        import std::net::tcp::TcpSocket;
         self.read_stop(read_port)
     }
 }
@@ -41,8 +41,8 @@ enum UvConnectionFactory {
     UvConnectionFactory
 }
 
-impl UvConnectionFactory : ConnectionFactory<tcp_socket> {
-    fn connect(ip: ip_addr, port: uint) -> Result<tcp_socket, tcp_connect_err_data> {
+impl UvConnectionFactory : ConnectionFactory<TcpSocket> {
+    fn connect(ip: IpAddr, port: uint) -> Result<TcpSocket, TcpConnectErrData> {
         import std::uv_global_loop;
         import std::net::tcp::connect;
         let iotask = uv_global_loop::get();
@@ -51,31 +51,31 @@ impl UvConnectionFactory : ConnectionFactory<tcp_socket> {
 }
 
 type MockConnection = {
-    write_fn: fn@(~[u8]) -> Result<(), tcp_err_data>,
-    read_start_fn: fn@() -> Result<ReadPort, tcp_err_data>,
-    read_stop_fn: fn@(-ReadPort) -> Result<(), tcp_err_data>
+    write_fn: fn@(~[u8]) -> Result<(), TcpErrData>,
+    read_start_fn: fn@() -> Result<ReadPort, TcpErrData>,
+    read_stop_fn: fn@(-ReadPort) -> Result<(), TcpErrData>
 };
 
 impl MockConnection : Connection {
-    fn write_(data: ~[u8]) -> Result<(), tcp_err_data> {
+    fn write_(data: ~[u8]) -> Result<(), TcpErrData> {
         self.write_fn(data)
     }
 
-    fn read_start_() -> Result<ReadPort, tcp_err_data> {
+    fn read_start_() -> Result<ReadPort, TcpErrData> {
         self.read_start_fn()
     }
 
-    fn read_stop_(-read_port: ReadPort) -> Result<(), tcp_err_data> {
+    fn read_stop_(-read_port: ReadPort) -> Result<(), TcpErrData> {
         self.read_stop_fn(read_port)
     }
 }
 
 type MockConnectionFactory = {
-    connect_fn: fn@(ip_addr, uint) -> Result<MockConnection, tcp_connect_err_data>
+    connect_fn: fn@(IpAddr, uint) -> Result<MockConnection, TcpConnectErrData>
 };
 
 impl MockConnectionFactory : ConnectionFactory<MockConnection> {
-    fn connect(ip: ip_addr, port: uint) -> Result<MockConnection, tcp_connect_err_data> {
+    fn connect(ip: IpAddr, port: uint) -> Result<MockConnection, TcpConnectErrData> {
         self.connect_fn(ip, port)
     }
 }
