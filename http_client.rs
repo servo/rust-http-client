@@ -7,6 +7,7 @@ import std::net::ip::{
     IpAddr, IpGetAddrErr, Ipv4, Ipv6
 };
 import std::net::tcp::{connect, TcpSocket};
+import std::net::url;
 import std::net::url::Url;
 import std::uv_global_loop;
 import connection::{
