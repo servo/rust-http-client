@@ -44,11 +44,17 @@ impl StatusCode: cmp::Eq {
     pure fn eq(&&other: StatusCode) -> bool {
         self as uint == other as uint
     }
+    pure fn ne(&&other: StatusCode) -> bool {
+        self as uint != other as uint
+    }
 }
 
 impl RequestError: cmp::Eq {
     pure fn eq(&&other: RequestError) -> bool {
         self as uint == other as uint
+    }
+    pure fn ne(&&other: RequestError) -> bool {
+        self as uint != other as uint
     }
 }
 
@@ -64,6 +70,9 @@ impl RequestEvent: cmp::Eq {
           | (Payload(*), _)
           | (Error(*), _) => false
         }
+    }
+    pure fn ne(&&other: RequestEvent) -> bool {
+        !self.eq(other)
     }
 }
 
@@ -82,21 +91,27 @@ fn uv_http_request(+url: Url) -> HttpRequest<TcpSocket, UvConnectionFactory> {
 
 #[allow(non_implicitly_copyable_typarams)]
 struct HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
+    resolve_ip_addr: DnsResolver,
+    connection_factory: CF,
+    url: Url,
+    parser: Parser,
+    mut cb: fn@(+RequestEvent)
+}
 
-    let resolve_ip_addr: DnsResolver;
-    let connection_factory: CF;
-    let url: Url;
-    let parser: Parser;
-    let mut cb: fn@(+RequestEvent);
-
-    new(resolver: DnsResolver, +connection_factory: CF, +url: Url) {
-        self.resolve_ip_addr = resolver;
-        self.connection_factory = connection_factory;
-        self.url = url;
-        self.parser = Parser();
-        self.cb = |_event| { };
+fn HttpRequest<C: Connection, CF: ConnectionFactory<C>>(resolver: DnsResolver,
+                                                        +connection_factory: CF,
+                                                        +url: Url) ->
+                                                        HttpRequest<C,CF> {
+    HttpRequest {
+        resolve_ip_addr: resolver,
+        connection_factory: connection_factory,
+        url: url,
+        parser: Parser(),
+        cb: |_event| { }
     }
+}
 
+impl<C: Connection, CF: ConnectionFactory<C>> HttpRequest<C, CF> {
     fn begin(cb: fn@(+RequestEvent)) {
         #debug("http_client: looking up url %?", self.url.to_str());
         let ip_addr = match self.get_ip() {

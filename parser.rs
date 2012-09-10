@@ -25,38 +25,45 @@ type ParserCallbacks = {
 };
 
 struct Parser {
-    let mut http_parser: http_parser;
-    let settings: http_parser_settings;
+    mut http_parser: http_parser,
+    settings: http_parser_settings
+}
 
-    new() {
-        self.http_parser = {
-            _type_flags: 0,
-            state: 0,
-            header_state: 0,
-            index: 0,
-            nread: 0,
-            content_length: 0,
-            http_major: 0,
-            http_minor: 0,
-            status_code: 0,
-            method: 0,
-            http_errno_upgrade: 0,
-            data: null()
-        };
+fn Parser() -> Parser {
+    let http_parser = {
+        _type_flags: 0,
+        state: 0,
+        header_state: 0,
+        index: 0,
+        nread: 0,
+        content_length: 0,
+        http_major: 0,
+        http_minor: 0,
+        status_code: 0,
+        method: 0,
+        http_errno_upgrade: 0,
+        data: null()
+    };
 
-        http_parser_init(addr_of(self.http_parser), HTTP_RESPONSE);
+    http_parser_init(addr_of(http_parser), HTTP_RESPONSE);
 
-        self.settings = {
-            on_message_begin: on_message_begin,
-            on_url: on_url,
-            on_header_field: on_header_field,
-            on_header_value: on_header_value,
-            on_headers_complete: on_headers_complete,
-            on_body: on_body,
-            on_message_complete: on_message_complete
-        };
+    let settings = {
+        on_message_begin: on_message_begin,
+        on_url: on_url,
+        on_header_field: on_header_field,
+        on_header_value: on_header_value,
+        on_headers_complete: on_headers_complete,
+        on_body: on_body,
+        on_message_complete: on_message_complete
+    };
+
+    Parser {
+        http_parser: move http_parser,
+        settings: move settings
     }
+}
 
+impl Parser {
     fn execute(data: &[u8], callbacks: &ParserCallbacks) -> uint {
         self.http_parser.data = addr_of(*callbacks) as *c_void;
         do vec::as_buf(data) |buf, _i| {
