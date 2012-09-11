@@ -1,6 +1,6 @@
-import comm::Port;
-import std::net::tcp::{TcpErrData, TcpConnectErrData};
-import std::net::ip::IpAddr;
+use comm::Port;
+use std::net::tcp::{TcpErrData, TcpConnectErrData};
+use std::net::ip::IpAddr;
 
 type ReadPort = Port<Result<~[u8], TcpErrData>>;
 
@@ -22,17 +22,17 @@ trait ConnectionFactory<C: Connection> {
 
 impl TcpSocket : Connection {
     fn write_(data: ~[u8]) -> Result<(), TcpErrData> {
-        import std::net::tcp::TcpSocket;
+        use std::net::tcp::TcpSocket;
         self.write(data)
     }
 
     fn read_start_() -> Result<ReadPort, TcpErrData> {
-        import std::net::tcp::TcpSocket;
+        use std::net::tcp::TcpSocket;
         self.read_start()
     }
 
     fn read_stop_(-read_port: ReadPort) -> Result<(), TcpErrData> {
-        import std::net::tcp::TcpSocket;
+        use std::net::tcp::TcpSocket;
         self.read_stop(read_port)
     }
 }
@@ -43,8 +43,8 @@ enum UvConnectionFactory {
 
 impl UvConnectionFactory : ConnectionFactory<TcpSocket> {
     fn connect(ip: IpAddr, port: uint) -> Result<TcpSocket, TcpConnectErrData> {
-        import std::uv_global_loop;
-        import std::net::tcp::connect;
+        use std::uv_global_loop;
+        use std::net::tcp::connect;
         let iotask = uv_global_loop::get();
         return connect(copy ip, port, iotask);
     }

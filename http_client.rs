@@ -1,21 +1,21 @@
-import to_str::to_str;
-import ptr::addr_of;
-import comm::{Port, Chan};
-import result::{Result, Ok, Err};
-import std::net::ip::{
+use to_str::to_str;
+use ptr::addr_of;
+use comm::{Port, Chan};
+use result::{Result, Ok, Err};
+use std::net::ip::{
     get_addr, format_addr,
     IpAddr, IpGetAddrErr, Ipv4, Ipv6
 };
-import std::net::tcp::{connect, TcpSocket};
-import std::net::url;
-import std::net::url::Url;
-import std::uv_global_loop;
-import connection::{
+use std::net::tcp::{connect, TcpSocket};
+use std::net::url;
+use std::net::url::Url;
+use std::uv_global_loop;
+use connection::{
     Connection, ConnectionFactory, UvConnectionFactory,
     MockConnection, MockConnectionFactory
 };
-import parser::{Parser, ParserCallbacks};
-import request::build_request;
+use parser::{Parser, ParserCallbacks};
+use request::build_request;
 
 const timeout: uint = 2000;
 

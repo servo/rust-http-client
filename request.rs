@@ -1,7 +1,7 @@
 export build_request;
 
-import std::net::url;
-import std::net::url::Url;
+use std::net::url;
+use std::net::url::Url;
 
 fn build_request(url: Url) -> ~str {
 

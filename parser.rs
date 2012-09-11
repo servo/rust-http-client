@@ -3,13 +3,13 @@
 export HttpCallback, HttpDataCallback;
 export ParserCallbacks, Parser;
 
-import vec::unsafe::from_buf;
-import libc::{c_int, c_void, c_char, size_t};
-import ptr::{null, addr_of};
-import http_parser::{
+use vec::unsafe::from_buf;
+use libc::{c_int, c_void, c_char, size_t};
+use ptr::{null, addr_of};
+use http_parser::{
     http_parser, http_parser_settings, HTTP_RESPONSE
 };
-import http_parser::bindgen::{http_parser_init, http_parser_execute};
+use http_parser::bindgen::{http_parser_init, http_parser_execute};
 
 type HttpCallback = fn@() -> bool;
 type HttpDataCallback = fn@(+~[u8]) -> bool;
