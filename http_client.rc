@@ -10,7 +10,7 @@ A simple HTTP client in Rust
 
 #[crate_type = "lib"];
 
-use std;
+extern mod std;
 
 mod connection;
 mod parser;

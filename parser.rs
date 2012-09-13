@@ -3,7 +3,7 @@
 export HttpCallback, HttpDataCallback;
 export ParserCallbacks, Parser;
 
-use vec::unsafe::from_buf;
+use vec::raw::from_buf;
 use libc::{c_int, c_void, c_char, size_t};
 use ptr::{null, addr_of};
 use http_parser::{
@@ -66,7 +66,7 @@ fn Parser() -> Parser {
 impl Parser {
     fn execute(data: &[u8], callbacks: &ParserCallbacks) -> uint {
         self.http_parser.data = addr_of(*callbacks) as *c_void;
-        do vec::as_buf(data) |buf, _i| {
+        do vec::as_imm_buf(data) |buf, _i| {
             http_parser_execute(addr_of(self.http_parser),
                                 addr_of(self.settings),
                                 buf as *c_char, data.len() as size_t) as uint
