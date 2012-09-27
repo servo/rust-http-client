@@ -95,7 +95,7 @@ struct HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
     connection_factory: CF,
     url: Url,
     parser: Parser,
-    mut cb: fn@(+RequestEvent)
+    mut cb: fn@(+ev: RequestEvent)
 }
 
 fn HttpRequest<C: Connection, CF: ConnectionFactory<C>>(resolver: DnsResolver,
@@ -112,7 +112,7 @@ fn HttpRequest<C: Connection, CF: ConnectionFactory<C>>(resolver: DnsResolver,
 }
 
 impl<C: Connection, CF: ConnectionFactory<C>> HttpRequest<C, CF> {
-    fn begin(cb: fn@(+RequestEvent)) {
+    fn begin(cb: fn@(+ev: RequestEvent)) {
         #debug("http_client: looking up url %?", self.url.to_str());
         let ip_addr = match self.get_ip() {
           Ok(addr) => { copy addr }
@@ -283,7 +283,7 @@ fn sequence<C: Connection, CF: ConnectionFactory<C>>(request: HttpRequest<C, CF>
     
     let events = @mut ~[];
     do request.begin |event| {
-        vec::push(*events, event)
+        vec::push(&mut *events, event)
     }
     return copy *events;
 }

@@ -12,7 +12,7 @@ use http_parser::{
 use http_parser::bindgen::{http_parser_init, http_parser_execute};
 
 type HttpCallback = fn@() -> bool;
-type HttpDataCallback = fn@(+~[u8]) -> bool;
+type HttpDataCallback = fn@(+data: ~[u8]) -> bool;
 
 type ParserCallbacks = {
     on_message_begin: HttpCallback,

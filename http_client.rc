@@ -12,8 +12,8 @@ A simple HTTP client in Rust
 
 extern mod std;
 
-mod connection;
-mod parser;
-mod response_headers;
-mod http_parser;
-mod request;
+pub mod connection;
+pub mod parser;
+pub mod response_headers;
+pub mod http_parser;
+pub mod request;

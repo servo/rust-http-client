@@ -53,7 +53,7 @@ impl UvConnectionFactory : ConnectionFactory<TcpSocket> {
 type MockConnection = {
     write_fn: fn@(~[u8]) -> Result<(), TcpErrData>,
     read_start_fn: fn@() -> Result<ReadPort, TcpErrData>,
-    read_stop_fn: fn@(-ReadPort) -> Result<(), TcpErrData>
+    read_stop_fn: fn@(-port: ReadPort) -> Result<(), TcpErrData>
 };
 
 impl MockConnection : Connection {
