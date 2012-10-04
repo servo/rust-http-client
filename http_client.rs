@@ -1,5 +1,5 @@
 use to_str::to_str;
-use ptr::addr_of;
+use ptr::to_unsafe_ptr;
 use comm::{Port, Chan};
 use result::{Result, Ok, Err};
 use std::net::ip::{
@@ -17,24 +17,24 @@ use connection::{
 use parser::{Parser, ParserCallbacks};
 use request::build_request;
 
-const timeout: uint = 2000;
+pub const timeout: uint = 2000;
 
 /// HTTP status codes
-enum StatusCode {
+pub enum StatusCode {
     StatusOk = 200,
     StatusFound = 302,
     StatusUnknown
 }
 
 /// HTTP request error conditions
-enum RequestError {
+pub enum RequestError {
     ErrorDnsResolution,
     ErrorConnect,
     ErrorMisc
 }
 
 /// Request 
-enum RequestEvent {
+pub enum RequestEvent {
     Status(StatusCode),
     Payload(~mut Option<~[u8]>),
     Error(RequestError)
@@ -76,21 +76,21 @@ impl RequestEvent: cmp::Eq {
     }
 }
 
-type DnsResolver = fn@(host: ~str) -> Result<~[IpAddr], IpGetAddrErr>;
+pub type DnsResolver = fn@(host: ~str) -> Result<~[IpAddr], IpGetAddrErr>;
 
-fn uv_dns_resolver() -> DnsResolver {
+pub fn uv_dns_resolver() -> DnsResolver {
     |host: ~str| {
         let iotask = uv_global_loop::get();
         get_addr(host.to_str(), iotask)
     }
 }
 
-fn uv_http_request(+url: Url) -> HttpRequest<TcpSocket, UvConnectionFactory> {
+pub fn uv_http_request(+url: Url) -> HttpRequest<TcpSocket, UvConnectionFactory> {
     HttpRequest(uv_dns_resolver(), UvConnectionFactory, url)
 }
 
 #[allow(non_implicitly_copyable_typarams)]
-struct HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
+pub struct HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
     resolve_ip_addr: DnsResolver,
     connection_factory: CF,
     url: Url,
@@ -98,10 +98,10 @@ struct HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
     mut cb: fn@(+ev: RequestEvent)
 }
 
-fn HttpRequest<C: Connection, CF: ConnectionFactory<C>>(resolver: DnsResolver,
-                                                        +connection_factory: CF,
-                                                        +url: Url) ->
-                                                        HttpRequest<C,CF> {
+pub fn HttpRequest<C: Connection, CF: ConnectionFactory<C>>(resolver: DnsResolver,
+                                                            +connection_factory: CF,
+                                                            +url: Url) ->
+                                                            HttpRequest<C,CF> {
     HttpRequest {
         resolve_ip_addr: resolver,
         connection_factory: connection_factory,
@@ -159,7 +159,7 @@ impl<C: Connection, CF: ConnectionFactory<C>> HttpRequest<C, CF> {
 
         // This unsafety is unfortunate but we can't capture self
         // into shared closures
-        let unsafe_self = addr_of(self);
+        let unsafe_self = to_unsafe_ptr(&self);
         let callbacks: ParserCallbacks = {
             on_message_begin: || unsafe { (*unsafe_self).on_message_begin() },
             on_url: |data| unsafe { (*unsafe_self).on_url(data) },
@@ -278,7 +278,7 @@ impl<C: Connection, CF: ConnectionFactory<C>> HttpRequest<C, CF> {
 }
 
 #[allow(non_implicitly_copyable_typarams)]
-fn sequence<C: Connection, CF: ConnectionFactory<C>>(request: HttpRequest<C, CF>) -> 
+pub fn sequence<C: Connection, CF: ConnectionFactory<C>>(request: HttpRequest<C, CF>) -> 
     ~[RequestEvent] {
     
     let events = @mut ~[];
@@ -290,7 +290,7 @@ fn sequence<C: Connection, CF: ConnectionFactory<C>>(request: HttpRequest<C, CF>
 
 #[test]
 #[allow(non_implicitly_copyable_typarams)]
-fn test_resolve_error() {
+pub fn test_resolve_error() {
     let url = url::from_str(~"http://example.com_not_real/").get();
     let request = uv_http_request(url);
     let events = sequence(request);
@@ -302,7 +302,7 @@ fn test_resolve_error() {
 
 #[test]
 #[allow(non_implicitly_copyable_typarams)]
-fn test_connect_error() {
+pub fn test_connect_error() {
     // This address is invalid because the first octet
     // of a class A address cannot be 0
     let url = url::from_str(~"http://0.42.42.42/").get();
@@ -316,7 +316,7 @@ fn test_connect_error() {
 
 #[test]
 #[allow(non_implicitly_copyable_typarams)]
-fn test_connect_success() {
+pub fn test_connect_success() {
     let url = url::from_str(~"http://example.com/").get();
     let request = uv_http_request(url);
     let events = sequence(request);
@@ -331,7 +331,7 @@ fn test_connect_success() {
 
 #[test]
 #[allow(non_implicitly_copyable_typarams)]
-fn test_simple_body() {
+pub fn test_simple_body() {
     let url = url::from_str(~"http://www.iana.org/").get();
     let request = uv_http_request(url);
     let events = sequence(request);
@@ -355,7 +355,7 @@ fn test_simple_body() {
 #[test]
 #[ignore(reason = "ICE")]
 #[allow(non_implicitly_copyable_typarams)]
-fn test_simple_response() {
+pub fn test_simple_response() {
     let _url = url::from_str(~"http://whatever/").get();
     let _mock_connection: MockConnection = {
         write_fn: |_data| { Ok(()) },
