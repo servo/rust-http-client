@@ -13,7 +13,7 @@ mocking
 trait Connection {
     fn write_(data: ~[u8]) -> Result<(), TcpErrData>;
     fn read_start_() -> Result<ReadPort, TcpErrData>;
-    fn read_stop_(-read_port: ReadPort) -> Result<(), TcpErrData>;
+    fn read_stop_(read_port: ReadPort) -> Result<(), TcpErrData>;
 }
 
 trait ConnectionFactory<C: Connection> {
@@ -31,7 +31,7 @@ impl TcpSocket : Connection {
         self.read_start()
     }
 
-    fn read_stop_(-read_port: ReadPort) -> Result<(), TcpErrData> {
+    fn read_stop_(read_port: ReadPort) -> Result<(), TcpErrData> {
         use std::net::tcp::TcpSocket;
         self.read_stop(read_port)
     }
@@ -65,7 +65,7 @@ impl MockConnection : Connection {
         self.read_start_fn()
     }
 
-    fn read_stop_(-read_port: ReadPort) -> Result<(), TcpErrData> {
+    fn read_stop_(read_port: ReadPort) -> Result<(), TcpErrData> {
         self.read_stop_fn(read_port)
     }
 }

@@ -61,7 +61,7 @@ impl RequestError: cmp::Eq {
 impl RequestEvent: cmp::Eq {
     pure fn eq(other: &RequestEvent) -> bool {
         // FIXME: bad copy
-        match (self, *other) {
+        match (copy self, copy *other) {
           (Status(a), Status(b)) => a == b,
           (Payload(a), Payload(b)) => a == b,
           (Error(a), Error(b)) => a == b,
@@ -85,7 +85,7 @@ pub fn uv_dns_resolver() -> DnsResolver {
     }
 }
 
-pub fn uv_http_request(+url: Url) -> HttpRequest<TcpSocket, UvConnectionFactory> {
+pub fn uv_http_request(url: Url) -> HttpRequest<TcpSocket, UvConnectionFactory> {
     HttpRequest(uv_dns_resolver(), UvConnectionFactory, url)
 }
 
@@ -99,8 +99,8 @@ pub struct HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
 }
 
 pub fn HttpRequest<C: Connection, CF: ConnectionFactory<C>>(resolver: DnsResolver,
-                                                            +connection_factory: CF,
-                                                            +url: Url) ->
+                                                            connection_factory: CF,
+                                                            url: Url) ->
                                                             HttpRequest<C,CF> {
     HttpRequest {
         resolve_ip_addr: resolver,
@@ -111,8 +111,9 @@ pub fn HttpRequest<C: Connection, CF: ConnectionFactory<C>>(resolver: DnsResolve
     }
 }
 
+#[allow(non_implicitly_copyable_typarams)]
 impl<C: Connection, CF: ConnectionFactory<C>> HttpRequest<C, CF> {
-    fn begin(cb: fn@(+ev: RequestEvent)) {
+    fn begin(cb: fn@(ev: RequestEvent)) {
         #debug("http_client: looking up url %?", self.url.to_str());
         let ip_addr = match self.get_ip() {
           Ok(addr) => { copy addr }
@@ -135,7 +136,7 @@ impl<C: Connection, CF: ConnectionFactory<C>> HttpRequest<C, CF> {
 
         #debug("http_client: got socket for %?", ip_addr);
 
-        let request_header = build_request(self.url);
+        let request_header = build_request(copy self.url);
         #debug("http_client: writing request header: %?", request_header);
         let request_header_bytes = str::to_bytes(request_header);
         match socket.write_(request_header_bytes) {
@@ -177,7 +178,7 @@ impl<C: Connection, CF: ConnectionFactory<C>> HttpRequest<C, CF> {
             let next_data = read_port.recv();
 
             if next_data.is_ok() {
-                let next_data = next_data.get();
+                let next_data = result::unwrap(next_data);
                 #debug("data: %?", next_data);
                 let bytes_parsed = self.parser.execute(next_data, &callbacks);
                 if bytes_parsed != next_data.len() {
@@ -206,7 +207,7 @@ impl<C: Connection, CF: ConnectionFactory<C>> HttpRequest<C, CF> {
     }
 
     fn get_ip() -> Result<IpAddr, RequestError> {
-        let ip_addrs = self.resolve_ip_addr(self.url.host);
+        let ip_addrs = self.resolve_ip_addr(copy self.url.host);
         if ip_addrs.is_ok() {
             let ip_addrs = result::unwrap(ip_addrs);
             // FIXME: This log crashes
@@ -242,18 +243,18 @@ impl<C: Connection, CF: ConnectionFactory<C>> HttpRequest<C, CF> {
         true
     }
 
-    fn on_url(+_data: ~[u8]) -> bool {
+    fn on_url(_data: ~[u8]) -> bool {
         #debug("on_url");
         true
     }
 
-    fn on_header_field(+data: ~[u8]) -> bool {
+    fn on_header_field(data: ~[u8]) -> bool {
         let header_field = str::from_bytes(data);
         #debug("on_header_field: %?", header_field);
         true
     }
 
-    fn on_header_value(+data: ~[u8]) -> bool {
+    fn on_header_value(data: ~[u8]) -> bool {
         let header_value = str::from_bytes(data);
         #debug("on_header_value: %?", header_value);
         true
@@ -264,7 +265,7 @@ impl<C: Connection, CF: ConnectionFactory<C>> HttpRequest<C, CF> {
         true
     }
 
-    fn on_body(+data: ~[u8]) -> bool {
+    fn on_body(data: ~[u8]) -> bool {
         #debug("on_body");
         let the_payload = Payload(~mut Some(data));
         self.cb(the_payload);
@@ -322,7 +323,7 @@ pub fn test_connect_success() {
     let events = sequence(request);
 
     for events.each |ev| {
-        match ev {
+        match *ev {
           Error(*) => { fail }
           _ => { }
         }
@@ -339,7 +340,7 @@ pub fn test_simple_body() {
     let mut found = false;
 
     for events.each |ev| {
-        match ev {
+        match *ev {
           Payload(value) => {
             if str::from_bytes(value.get()).contains(~"DOCTYPE html") {
                 found = true
