@@ -3,7 +3,7 @@
 export HttpCallback, HttpDataCallback;
 export ParserCallbacks, Parser;
 
-use vec::raw::from_buf;
+use vec::raw::from_buf_raw;
 use libc::{c_int, c_void, c_char, size_t};
 use ptr::{null, to_unsafe_ptr};
 use http_parser::{
@@ -93,19 +93,19 @@ extern fn on_message_begin(http_parser: *http_parser) -> c_int {
 
 extern fn on_url(http_parser: *http_parser, at: *u8, length: size_t) -> c_int {
     unsafe {
-        (!(*callbacks(http_parser)).on_url(from_buf(at, length as uint))) as c_int
+        (!(*callbacks(http_parser)).on_url(from_buf_raw(at, length as uint))) as c_int
     }
 }
 
 extern fn on_header_field(http_parser: *http_parser, at: *u8, length: size_t) -> c_int {
     unsafe {
-        (!(*callbacks(http_parser)).on_header_field(from_buf(at, length as uint))) as c_int
+        (!(*callbacks(http_parser)).on_header_field(from_buf_raw(at, length as uint))) as c_int
     }
 }
 
 extern fn on_header_value(http_parser: *http_parser, at: *u8, length: size_t) -> c_int {
     unsafe {
-        (!(*callbacks(http_parser)).on_header_value(from_buf(at, length as uint))) as c_int
+        (!(*callbacks(http_parser)).on_header_value(from_buf_raw(at, length as uint))) as c_int
     }
 }
 
@@ -117,7 +117,7 @@ extern fn on_headers_complete(http_parser: *http_parser) -> c_int {
 
 extern fn on_body(http_parser: *http_parser, at: *u8, length: size_t) -> c_int {
     unsafe {
-        (!(*callbacks(http_parser)).on_body(from_buf(at, length as uint))) as c_int
+        (!(*callbacks(http_parser)).on_body(from_buf_raw(at, length as uint))) as c_int
     }
 }
 
