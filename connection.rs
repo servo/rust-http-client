@@ -66,7 +66,7 @@ impl MockConnection : Connection {
     }
 
     fn read_stop_(read_port: ReadPort) -> Result<(), TcpErrData> {
-        self.read_stop_fn(read_port)
+        self.read_stop_fn(move read_port)
     }
 }
 

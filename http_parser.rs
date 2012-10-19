@@ -307,7 +307,7 @@ type intmax_t = c_long;
 
 type uintmax_t = c_ulong;
 
-type http_parser = struct_http_parser;
+pub type http_parser = struct_http_parser;
 
 type http_parser_settings = struct_http_parser_settings;
 

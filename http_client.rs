@@ -103,10 +103,10 @@ pub fn HttpRequest<C: Connection, CF: ConnectionFactory<C>>(resolver: DnsResolve
                                                             url: Url) ->
                                                             HttpRequest<C,CF> {
     HttpRequest {
-        resolve_ip_addr: resolver,
-        connection_factory: connection_factory,
-        url: url,
-        parser: Parser(),
+        resolve_ip_addr: move resolver,
+        connection_factory: move connection_factory,
+        url: move url,
+        parser: move Parser(),
         cb: |_event| { }
     }
 }
@@ -126,7 +126,7 @@ impl<C: Connection, CF: ConnectionFactory<C>> HttpRequest<C, CF> {
             #debug("http_client: connecting to %?", ip_addr);
             let socket = self.connection_factory.connect(copy ip_addr, 80);
             if socket.is_ok() {
-                result::unwrap(socket)
+                result::unwrap(move socket)
             } else {
                 #debug("http_client: unable to connect to %?: %?", ip_addr, socket);
                 cb(Error(ErrorConnect));

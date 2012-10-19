@@ -6,9 +6,7 @@ export ParserCallbacks, Parser;
 use vec::raw::from_buf_raw;
 use libc::{c_int, c_void, c_char, size_t};
 use ptr::{null, to_unsafe_ptr};
-use http_parser::{
-    http_parser, http_parser_settings, HTTP_RESPONSE
-};
+use http_parser::{http_parser_settings, HTTP_RESPONSE};
 use http_parser::bindgen::{http_parser_init, http_parser_execute};
 
 type HttpCallback = fn@() -> bool;
@@ -25,7 +23,7 @@ type ParserCallbacks = {
 };
 
 struct Parser {
-    mut http_parser: http_parser,
+    mut http_parser: http_parser::http_parser,
     settings: http_parser_settings
 }
 
@@ -78,50 +76,52 @@ impl Parser {
     }
 }
 
-fn callbacks(http_parser: *http_parser) -> *ParserCallbacks {
+fn callbacks(http_parser: *http_parser::http_parser) -> *ParserCallbacks {
     unsafe {
         assert (*http_parser).data.is_not_null();
         return (*http_parser).data as *ParserCallbacks;
     }
 }
 
-extern fn on_message_begin(http_parser: *http_parser) -> c_int {
+extern fn on_message_begin(http_parser: *http_parser::http_parser) -> c_int {
     unsafe {
         (!(*callbacks(http_parser)).on_message_begin()) as c_int
     }
 }
 
-extern fn on_url(http_parser: *http_parser, at: *u8, length: size_t) -> c_int {
+extern fn on_url(http_parser: *http_parser::http_parser, at: *u8, length: size_t) -> c_int {
     unsafe {
         (!(*callbacks(http_parser)).on_url(from_buf_raw(at, length as uint))) as c_int
     }
 }
 
-extern fn on_header_field(http_parser: *http_parser, at: *u8, length: size_t) -> c_int {
+extern fn on_header_field(http_parser: *http_parser::http_parser, at: *u8, length: size_t) ->
+        c_int {
     unsafe {
         (!(*callbacks(http_parser)).on_header_field(from_buf_raw(at, length as uint))) as c_int
     }
 }
 
-extern fn on_header_value(http_parser: *http_parser, at: *u8, length: size_t) -> c_int {
+extern fn on_header_value(http_parser: *http_parser::http_parser, at: *u8, length: size_t) ->
+        c_int {
     unsafe {
         (!(*callbacks(http_parser)).on_header_value(from_buf_raw(at, length as uint))) as c_int
     }
 }
 
-extern fn on_headers_complete(http_parser: *http_parser) -> c_int {
+extern fn on_headers_complete(http_parser: *http_parser::http_parser) -> c_int {
     unsafe {
         (!(*callbacks(http_parser)).on_headers_complete()) as c_int
     }
 }
 
-extern fn on_body(http_parser: *http_parser, at: *u8, length: size_t) -> c_int {
+extern fn on_body(http_parser: *http_parser::http_parser, at: *u8, length: size_t) -> c_int {
     unsafe {
         (!(*callbacks(http_parser)).on_body(from_buf_raw(at, length as uint))) as c_int
     }
 }
 
-extern fn on_message_complete(http_parser: *http_parser) -> c_int {
+extern fn on_message_complete(http_parser: *http_parser::http_parser) -> c_int {
     unsafe {
         (!(*callbacks(http_parser)).on_message_complete()) as c_int
     }
