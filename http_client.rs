@@ -86,7 +86,7 @@ pub fn uv_dns_resolver() -> DnsResolver {
 }
 
 pub fn uv_http_request(url: Url) -> HttpRequest<TcpSocket, UvConnectionFactory> {
-    HttpRequest(uv_dns_resolver(), UvConnectionFactory, url)
+    HttpRequest(uv_dns_resolver(), UvConnectionFactory, move url)
 }
 
 #[allow(non_implicitly_copyable_typarams)]
@@ -139,7 +139,7 @@ impl<C: Connection, CF: ConnectionFactory<C>> HttpRequest<C, CF> {
         let request_header = build_request(copy self.url);
         #debug("http_client: writing request header: %?", request_header);
         let request_header_bytes = str::to_bytes(request_header);
-        match socket.write_(request_header_bytes) {
+        match socket.write_(move request_header_bytes) {
           result::Ok(*) => { }
           result::Err(*) => {
             // FIXME: Need test
@@ -151,7 +151,7 @@ impl<C: Connection, CF: ConnectionFactory<C>> HttpRequest<C, CF> {
         let read_port = {
             let read_port = socket.read_start_();
             if read_port.is_ok() {
-                result::unwrap(read_port)
+                result::unwrap(move read_port)
             } else {
                 cb(Error(ErrorMisc));
                 return;
@@ -163,11 +163,11 @@ impl<C: Connection, CF: ConnectionFactory<C>> HttpRequest<C, CF> {
         let unsafe_self = to_unsafe_ptr(&self);
         let callbacks: ParserCallbacks = {
             on_message_begin: || unsafe { (*unsafe_self).on_message_begin() },
-            on_url: |data| unsafe { (*unsafe_self).on_url(data) },
-            on_header_field: |data| unsafe { (*unsafe_self).on_header_field(data) },
-            on_header_value: |data| unsafe { (*unsafe_self).on_header_value(data) },
+            on_url: |data| unsafe { (*unsafe_self).on_url(move data) },
+            on_header_field: |data| unsafe { (*unsafe_self).on_header_field(move data) },
+            on_header_value: |data| unsafe { (*unsafe_self).on_header_value(move data) },
             on_headers_complete: || unsafe { (*unsafe_self).on_headers_complete() },
-            on_body: |data| unsafe { (*unsafe_self).on_body(data) },
+            on_body: |data| unsafe { (*unsafe_self).on_body(move data) },
             on_message_complete: || unsafe { (*unsafe_self).on_message_complete() }
         };
 
@@ -178,7 +178,7 @@ impl<C: Connection, CF: ConnectionFactory<C>> HttpRequest<C, CF> {
             let next_data = read_port.recv();
 
             if next_data.is_ok() {
-                let next_data = result::unwrap(next_data);
+                let next_data = result::unwrap(move next_data);
                 #debug("data: %?", next_data);
                 let bytes_parsed = self.parser.execute(next_data, &callbacks);
                 if bytes_parsed != next_data.len() {
@@ -209,7 +209,7 @@ impl<C: Connection, CF: ConnectionFactory<C>> HttpRequest<C, CF> {
     fn get_ip() -> Result<IpAddr, RequestError> {
         let ip_addrs = self.resolve_ip_addr(copy self.url.host);
         if ip_addrs.is_ok() {
-            let ip_addrs = result::unwrap(ip_addrs);
+            let ip_addrs = result::unwrap(move ip_addrs);
             // FIXME: This log crashes
             //#debug("http_client: got IP addresses for %?: %?", self.url, ip_addrs);
             if ip_addrs.is_not_empty() {
@@ -267,8 +267,8 @@ impl<C: Connection, CF: ConnectionFactory<C>> HttpRequest<C, CF> {
 
     fn on_body(data: ~[u8]) -> bool {
         #debug("on_body");
-        let the_payload = Payload(~mut Some(data));
-        self.cb(the_payload);
+        let the_payload = Payload(~mut Some(move data));
+        self.cb(move the_payload);
         true
     }
 
@@ -284,7 +284,7 @@ pub fn sequence<C: Connection, CF: ConnectionFactory<C>>(request: HttpRequest<C,
     
     let events = @mut ~[];
     do request.begin |event| {
-        vec::push(&mut *events, event)
+        vec::push(&mut *events, move event)
     }
     return copy *events;
 }

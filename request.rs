@@ -20,7 +20,7 @@ fn build_request(url: Url) -> ~str {
     let request_header = #fmt("GET %s HTTP/1.0\u000D\u000AHost: %s\u000D\u000A\u000D\u000A",
                               path, host);
 
-    return request_header;
+    return move request_header;
 }
 
 #[test]

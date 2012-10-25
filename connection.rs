@@ -23,7 +23,7 @@ trait ConnectionFactory<C: Connection> {
 impl TcpSocket : Connection {
     fn write_(data: ~[u8]) -> Result<(), TcpErrData> {
         use std::net::tcp::TcpSocket;
-        self.write(data)
+        self.write(move data)
     }
 
     fn read_start_() -> Result<ReadPort, TcpErrData> {
@@ -58,7 +58,7 @@ type MockConnection = {
 
 impl MockConnection : Connection {
     fn write_(data: ~[u8]) -> Result<(), TcpErrData> {
-        self.write_fn(data)
+        self.write_fn(move data)
     }
 
     fn read_start_() -> Result<ReadPort, TcpErrData> {
@@ -76,6 +76,6 @@ type MockConnectionFactory = {
 
 impl MockConnectionFactory : ConnectionFactory<MockConnection> {
     fn connect(ip: IpAddr, port: uint) -> Result<MockConnection, TcpConnectErrData> {
-        self.connect_fn(ip, port)
+        self.connect_fn(move ip, port)
     }
 }
