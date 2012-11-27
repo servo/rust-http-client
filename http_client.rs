@@ -41,37 +41,36 @@ pub enum RequestEvent {
 }
 
 impl StatusCode: cmp::Eq {
-    pure fn eq(other: &StatusCode) -> bool {
-        self as uint == (*other) as uint
+    pure fn eq(&self, other: &StatusCode) -> bool {
+        (*self) as uint == (*other) as uint
     }
-    pure fn ne(other: &StatusCode) -> bool {
-        self as uint != (*other) as uint
+    pure fn ne(&self, other: &StatusCode) -> bool {
+        (*self) as uint != (*other) as uint
     }
 }
 
 impl RequestError: cmp::Eq {
-    pure fn eq(other: &RequestError) -> bool {
-        self as uint == (*other) as uint
+    pure fn eq(&self, other: &RequestError) -> bool {
+        (*self) as uint == (*other) as uint
     }
-    pure fn ne(other: &RequestError) -> bool {
-        self as uint != (*other) as uint
+    pure fn ne(&self, other: &RequestError) -> bool {
+        (*self) as uint != (*other) as uint
     }
 }
 
 impl RequestEvent: cmp::Eq {
-    pure fn eq(other: &RequestEvent) -> bool {
-        // FIXME: bad copy
-        match (copy self, copy *other) {
-          (Status(a), Status(b)) => a == b,
-          (Payload(a), Payload(b)) => a == b,
-          (Error(a), Error(b)) => a == b,
+    pure fn eq(&self, other: &RequestEvent) -> bool {
+        match (self, other) {
+          (&Status(a), &Status(b)) => a == b,
+          (&Payload(a), &Payload(b)) => a == b,
+          (&Error(a), &Error(b)) => a == b,
 
-          (Status(*), _)
-          | (Payload(*), _)
-          | (Error(*), _) => false
+          (&Status(*), _)
+          | (&Payload(*), _)
+          | (&Error(*), _) => false
         }
     }
-    pure fn ne(other: &RequestEvent) -> bool {
+    pure fn ne(&self, other: &RequestEvent) -> bool {
         !self.eq(other)
     }
 }
