@@ -309,7 +309,7 @@ type uintmax_t = c_ulong;
 
 pub type http_parser = struct_http_parser;
 
-type http_parser_settings = struct_http_parser_settings;
+pub type http_parser_settings = struct_http_parser_settings;
 
 type http_data_cb = *u8;
 
@@ -345,7 +345,7 @@ const HTTP_PURGE: u32 = 25_u32;
 
 type enum_http_parser_type = c_uint;
 const HTTP_REQUEST: u32 = 0_u32;
-const HTTP_RESPONSE: u32 = 1_u32;
+pub const HTTP_RESPONSE: u32 = 1_u32;
 const HTTP_BOTH: u32 = 2_u32;
 
 type enum_flags = c_uint;

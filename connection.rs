@@ -2,7 +2,7 @@ use comm::Port;
 use std::net::tcp::{TcpErrData, TcpConnectErrData};
 use std::net::ip::IpAddr;
 
-type ReadPort = Port<Result<~[u8], TcpErrData>>;
+pub type ReadPort = Port<Result<~[u8], TcpErrData>>;
 
 /**
 An abstract client socket connection. This mirrors the bits
@@ -10,13 +10,13 @@ of the net::tcp::TcpSocket interface that we care about
 while letting us have additional implementations for
 mocking
 */
-trait Connection {
+pub trait Connection {
     fn write_(data: ~[u8]) -> Result<(), TcpErrData>;
     fn read_start_() -> Result<ReadPort, TcpErrData>;
     fn read_stop_(read_port: ReadPort) -> Result<(), TcpErrData>;
 }
 
-trait ConnectionFactory<C: Connection> {
+pub trait ConnectionFactory<C: Connection> {
     fn connect(ip: IpAddr, port: uint) -> Result<C, TcpConnectErrData>;
 }
 
@@ -37,7 +37,7 @@ impl TcpSocket : Connection {
     }
 }
 
-enum UvConnectionFactory {
+pub enum UvConnectionFactory {
     UvConnectionFactory
 }
 
@@ -50,7 +50,7 @@ impl UvConnectionFactory : ConnectionFactory<TcpSocket> {
     }
 }
 
-type MockConnection = {
+pub type MockConnection = {
     write_fn: fn@(~[u8]) -> Result<(), TcpErrData>,
     read_start_fn: fn@() -> Result<ReadPort, TcpErrData>,
     read_stop_fn: fn@(-port: ReadPort) -> Result<(), TcpErrData>
@@ -70,7 +70,7 @@ impl MockConnection : Connection {
     }
 }
 
-type MockConnectionFactory = {
+pub type MockConnectionFactory = {
     connect_fn: fn@(IpAddr, uint) -> Result<MockConnection, TcpConnectErrData>
 };
 

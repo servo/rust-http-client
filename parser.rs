@@ -1,18 +1,15 @@
 //! Higher-level Rust constructs for http_parser
 
-export HttpCallback, HttpDataCallback;
-export ParserCallbacks, Parser;
-
 use vec::raw::from_buf_raw;
 use libc::{c_int, c_void, c_char, size_t};
 use ptr::{null, to_unsafe_ptr};
 use http_parser::{http_parser_settings, HTTP_RESPONSE};
 use http_parser::bindgen::{http_parser_init, http_parser_execute};
 
-type HttpCallback = fn@() -> bool;
-type HttpDataCallback = fn@(data: ~[u8]) -> bool;
+pub type HttpCallback = fn@() -> bool;
+pub type HttpDataCallback = fn@(data: ~[u8]) -> bool;
 
-type ParserCallbacks = {
+pub type ParserCallbacks = {
     on_message_begin: HttpCallback,
     on_url: HttpDataCallback,
     on_header_field: HttpDataCallback,
@@ -22,12 +19,12 @@ type ParserCallbacks = {
     on_message_complete: HttpCallback
 };
 
-struct Parser {
+pub struct Parser {
     mut http_parser: http_parser::http_parser,
     settings: http_parser_settings
 }
 
-fn Parser() -> Parser {
+pub fn Parser() -> Parser {
     let http_parser = {
         _type_flags: 0,
         state: 0,
