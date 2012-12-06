@@ -58,15 +58,15 @@ pub type MockConnection = {
 
 impl MockConnection : Connection {
     fn write_(data: ~[u8]) -> Result<(), TcpErrData> {
-        self.write_fn(move data)
+        (self.write_fn)(move data)
     }
 
     fn read_start_() -> Result<ReadPort, TcpErrData> {
-        self.read_start_fn()
+        (self.read_start_fn)()
     }
 
     fn read_stop_(read_port: ReadPort) -> Result<(), TcpErrData> {
-        self.read_stop_fn(move read_port)
+        (self.read_stop_fn)(move read_port)
     }
 }
 
@@ -76,6 +76,6 @@ pub type MockConnectionFactory = {
 
 impl MockConnectionFactory : ConnectionFactory<MockConnection> {
     fn connect(ip: IpAddr, port: uint) -> Result<MockConnection, TcpConnectErrData> {
-        self.connect_fn(move ip, port)
+        (self.connect_fn)(move ip, port)
     }
 }

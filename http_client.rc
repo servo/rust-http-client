@@ -226,7 +226,7 @@ impl<C: Connection, CF: ConnectionFactory<C>> HttpRequest<C, CF> {
     }
 
     fn get_ip() -> Result<IpAddr, RequestError> {
-        let ip_addrs = self.resolve_ip_addr(copy self.url.host);
+        let ip_addrs = (self.resolve_ip_addr)(copy self.url.host);
         if ip_addrs.is_ok() {
             let ip_addrs = result::unwrap(move ip_addrs);
             // FIXME: This log crashes
@@ -287,7 +287,7 @@ impl<C: Connection, CF: ConnectionFactory<C>> HttpRequest<C, CF> {
     fn on_body(data: ~[u8]) -> bool {
         debug!("on_body");
         let the_payload = Payload(~mut Some(move data));
-        self.cb(move the_payload);
+        (self.cb)(move the_payload);
         true
     }
 

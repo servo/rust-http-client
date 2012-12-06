@@ -82,44 +82,44 @@ fn callbacks(http_parser: *http_parser::http_parser) -> *ParserCallbacks {
 
 extern fn on_message_begin(http_parser: *http_parser::http_parser) -> c_int {
     unsafe {
-        (!(*callbacks(http_parser)).on_message_begin()) as c_int
+        (!((*callbacks(http_parser)).on_message_begin)()) as c_int
     }
 }
 
 extern fn on_url(http_parser: *http_parser::http_parser, at: *u8, length: size_t) -> c_int {
     unsafe {
-        (!(*callbacks(http_parser)).on_url(from_buf_raw(at, length as uint))) as c_int
+        (!(((*callbacks(http_parser)).on_url)(from_buf_raw(at, length as uint)))) as c_int
     }
 }
 
 extern fn on_header_field(http_parser: *http_parser::http_parser, at: *u8, length: size_t) ->
         c_int {
     unsafe {
-        (!(*callbacks(http_parser)).on_header_field(from_buf_raw(at, length as uint))) as c_int
+        (!((*callbacks(http_parser)).on_header_field)(from_buf_raw(at, length as uint))) as c_int
     }
 }
 
 extern fn on_header_value(http_parser: *http_parser::http_parser, at: *u8, length: size_t) ->
         c_int {
     unsafe {
-        (!(*callbacks(http_parser)).on_header_value(from_buf_raw(at, length as uint))) as c_int
+        (!((*callbacks(http_parser)).on_header_value)(from_buf_raw(at, length as uint))) as c_int
     }
 }
 
 extern fn on_headers_complete(http_parser: *http_parser::http_parser) -> c_int {
     unsafe {
-        (!(*callbacks(http_parser)).on_headers_complete()) as c_int
+        (!((*callbacks(http_parser)).on_headers_complete)()) as c_int
     }
 }
 
 extern fn on_body(http_parser: *http_parser::http_parser, at: *u8, length: size_t) -> c_int {
     unsafe {
-        (!(*callbacks(http_parser)).on_body(from_buf_raw(at, length as uint))) as c_int
+        (!((*callbacks(http_parser)).on_body)(from_buf_raw(at, length as uint))) as c_int
     }
 }
 
 extern fn on_message_complete(http_parser: *http_parser::http_parser) -> c_int {
     unsafe {
-        (!(*callbacks(http_parser)).on_message_complete()) as c_int
+        (!((*callbacks(http_parser)).on_message_complete)()) as c_int
     }
 }
