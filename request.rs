@@ -15,7 +15,7 @@ pub fn build_request(url: Url) -> ~str {
         path += ~"?" + str::connect(kvps, "&");
     }
 
-    let request_header = #fmt("GET %s HTTP/1.0\u000D\u000AHost: %s\u000D\u000A\u000D\u000A",
+    let request_header = fmt!("GET %s HTTP/1.0\u000D\u000AHost: %s\u000D\u000A\u000D\u000A",
                               path, host);
 
     return move request_header;

@@ -18,7 +18,6 @@ pub mod response_headers;
 pub mod http_parser;
 pub mod request;
 
-use to_str::to_str;
 use ptr::to_unsafe_ptr;
 use comm::{Port, Chan};
 use result::{Result, Ok, Err};
