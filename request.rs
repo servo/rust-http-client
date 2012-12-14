@@ -9,7 +9,7 @@ pub fn build_request(url: Url) -> ~str {
     if url.query.len() > 0 {
         let kvps = do url.query.map |pair| {
             match *pair {
-                (key, value) => fmt!("%s=%s", key, value)
+                (ref key, ref value) => fmt!("%s=%s", *key, *value)
             }
         };
         path += ~"?" + str::connect(kvps, "&");
