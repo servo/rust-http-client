@@ -19,7 +19,7 @@ pub mod http_parser;
 pub mod request;
 
 use ptr::to_unsafe_ptr;
-use comm::{Port, Chan};
+use oldcomm::{Port, Chan};
 use result::{Result, Ok, Err};
 use std::net::ip::{
     get_addr, format_addr,
@@ -80,9 +80,9 @@ impl RequestError: cmp::Eq {
 impl RequestEvent: cmp::Eq {
     pure fn eq(&self, other: &RequestEvent) -> bool {
         match (self, other) {
-          (&Status(a), &Status(b)) => a == b,
-          (&Payload(a), &Payload(b)) => a == b,
-          (&Error(a), &Error(b)) => a == b,
+          (&Status(ref a), &Status(ref b)) => a == b,
+          (&Payload(ref a), &Payload(ref b)) => a == b,
+          (&Error(ref a), &Error(ref b)) => a == b,
 
           (&Status(*), _)
           | (&Payload(*), _)
@@ -233,7 +233,7 @@ impl<C: Connection, CF: ConnectionFactory<C>> HttpRequest<C, CF> {
             if ip_addrs.is_not_empty() {
                 // FIXME: Which address should we really pick?
                 let best_ip = do ip_addrs.find |ip| {
-                    match ip {
+                    match *ip {
                       Ipv4(*) => { true }
                       Ipv6(*) => { false }
                     }

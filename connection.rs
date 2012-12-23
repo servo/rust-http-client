@@ -1,4 +1,4 @@
-use comm::Port;
+use oldcomm::Port;
 use std::net::tcp::{TcpErrData, TcpConnectErrData};
 use std::net::ip::IpAddr;
 
