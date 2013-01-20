@@ -1,5 +1,5 @@
 use oldcomm::Port;
-use std::net::tcp::{TcpErrData, TcpConnectErrData};
+use std::net::tcp::{TcpErrData, TcpConnectErrData, TcpSocket};
 use std::net::ip::IpAddr;
 
 pub type ReadPort = Port<Result<~[u8], TcpErrData>>;

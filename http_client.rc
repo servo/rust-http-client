@@ -97,10 +97,11 @@ impl RequestEvent: cmp::Eq {
 pub type DnsResolver = fn@(host: ~str) -> Result<~[IpAddr], IpGetAddrErr>;
 
 pub fn uv_dns_resolver() -> DnsResolver {
-    |host: ~str| {
+    let r: DnsResolver = |host: ~str| {
         let iotask = uv_global_loop::get();
         get_addr(host.to_str(), iotask)
-    }
+    };
+    return r;
 }
 
 pub fn uv_http_request(url: Url) -> HttpRequest<TcpSocket, UvConnectionFactory> {

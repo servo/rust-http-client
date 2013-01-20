@@ -1,5 +1,6 @@
 //! Higher-level Rust constructs for http_parser
 
+use http_parser;
 use vec::raw::from_buf_raw;
 use libc::{c_int, c_void, c_char, size_t};
 use ptr::{null, to_unsafe_ptr};
