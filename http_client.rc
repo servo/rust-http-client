@@ -359,9 +359,9 @@ pub fn test_simple_body() {
     let mut found = false;
 
     for events.each |ev| {
-        match *ev {
-          Payload(value) => {
-            if str::from_bytes(value.get()).contains(~"DOCTYPE html") {
+        match ev {
+          &Payload(ref value) => {
+            if str::from_bytes(value.get()).to_lower().contains(~"doctype html") {
                 found = true
             }
           }
