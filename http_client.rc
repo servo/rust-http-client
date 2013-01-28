@@ -25,7 +25,7 @@ use std::net::ip::{
     get_addr, format_addr,
     IpAddr, IpGetAddrErr, Ipv4, Ipv6
 };
-use std::net::tcp::{connect, TcpSocket};
+use std::net::tcp::{connect, TcpSocket, TcpErrData};
 use std::net::url;
 use std::net::url::Url;
 use std::uv_global_loop;
@@ -209,7 +209,7 @@ impl<C: Connection, CF: ConnectionFactory<C>> HttpRequest<C, CF> {
 
                 // This method of detecting EOF is lame
                 match next_data {
-                  result::Err({err_name: ~"EOF", _}) => {
+                  result::Err(TcpErrData {err_name: ~"EOF", _}) => {
                     self.parser.execute(~[], &callbacks);
                     break;
                   }

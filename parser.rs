@@ -41,7 +41,7 @@ pub fn Parser() -> Parser {
         data: null()
     };
 
-    http_parser_init(to_unsafe_ptr(&http_parser), HTTP_RESPONSE);
+    unsafe { http_parser_init(to_unsafe_ptr(&http_parser), HTTP_RESPONSE) };
 
     let settings = {
         on_message_begin: on_message_begin,
@@ -63,9 +63,11 @@ impl Parser {
     fn execute(data: &[u8], callbacks: &ParserCallbacks) -> uint {
         self.http_parser.data = to_unsafe_ptr(callbacks) as *c_void;
         do vec::as_imm_buf(data) |buf, _i| {
-            http_parser_execute(to_unsafe_ptr(&self.http_parser),
-                                to_unsafe_ptr(&self.settings),
-                                buf as *c_char, data.len() as size_t) as uint
+            unsafe {
+                http_parser_execute(to_unsafe_ptr(&self.http_parser),
+                                    to_unsafe_ptr(&self.settings),
+                                    buf as *c_char, data.len() as size_t) as uint
+            }
         }
     }
 
