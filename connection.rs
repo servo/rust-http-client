@@ -1,4 +1,4 @@
-use oldcomm::Port;
+use core::pipes::Port;
 use std::net::tcp::{TcpErrData, TcpConnectErrData, TcpSocket};
 use std::net::ip::IpAddr;
 
@@ -12,8 +12,8 @@ mocking
 */
 pub trait Connection {
     fn write_(data: ~[u8]) -> Result<(), TcpErrData>;
-    fn read_start_() -> Result<ReadPort, TcpErrData>;
-    fn read_stop_(read_port: ReadPort) -> Result<(), TcpErrData>;
+    fn read_start_() -> Result<@ReadPort, TcpErrData>;
+    fn read_stop_(read_port: @ReadPort) -> Result<(), TcpErrData>;
 }
 
 pub trait ConnectionFactory<C: Connection> {
@@ -26,14 +26,14 @@ impl TcpSocket : Connection {
         self.write(move data)
     }
 
-    fn read_start_() -> Result<ReadPort, TcpErrData> {
+    fn read_start_() -> Result<@ReadPort, TcpErrData> {
         use std::net::tcp::TcpSocket;
         self.read_start()
     }
 
-    fn read_stop_(read_port: ReadPort) -> Result<(), TcpErrData> {
+    fn read_stop_(read_port: @ReadPort) -> Result<(), TcpErrData> {
         use std::net::tcp::TcpSocket;
-        self.read_stop(read_port)
+        self.read_stop()
     }
 }
 
@@ -46,14 +46,14 @@ impl UvConnectionFactory : ConnectionFactory<TcpSocket> {
         use std::uv_global_loop;
         use std::net::tcp::connect;
         let iotask = uv_global_loop::get();
-        return connect(copy ip, port, iotask);
+        return connect(copy ip, port, &iotask);
     }
 }
 
 pub type MockConnection = {
     write_fn: fn@(~[u8]) -> Result<(), TcpErrData>,
-    read_start_fn: fn@() -> Result<ReadPort, TcpErrData>,
-    read_stop_fn: fn@(-port: ReadPort) -> Result<(), TcpErrData>
+    read_start_fn: fn@() -> Result<@ReadPort, TcpErrData>,
+    read_stop_fn: fn@(-port: @ReadPort) -> Result<(), TcpErrData>
 };
 
 impl MockConnection : Connection {
@@ -61,12 +61,12 @@ impl MockConnection : Connection {
         (self.write_fn)(move data)
     }
 
-    fn read_start_() -> Result<ReadPort, TcpErrData> {
+    fn read_start_() -> Result<@ReadPort, TcpErrData> {
         (self.read_start_fn)()
     }
 
-    fn read_stop_(read_port: ReadPort) -> Result<(), TcpErrData> {
-        (self.read_stop_fn)(move read_port)
+    fn read_stop_(read_port: @ReadPort) -> Result<(), TcpErrData> {
+        (self.read_stop_fn)(read_port)
     }
 }
 

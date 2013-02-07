@@ -387,7 +387,7 @@ const HPE_STRICT: u32 = 26_u32;
 const HPE_PAUSED: u32 = 27_u32;
 const HPE_UNKNOWN: u32 = 28_u32;
 
-type struct_http_parser = {
+pub struct struct_http_parser {
     _type_flags: c_uchar,
     state: c_uchar,
     header_state: c_uchar,
@@ -400,9 +400,9 @@ type struct_http_parser = {
     method: c_uchar,
     http_errno_upgrade: c_uchar,
     data: *c_void,
-};
+}
 
-type struct_http_parser_settings = {
+pub struct struct_http_parser_settings {
     on_message_begin: http_cb,
     on_url: http_data_cb,
     on_header_field: http_data_cb,
@@ -410,7 +410,7 @@ type struct_http_parser_settings = {
     on_headers_complete: http_cb,
     on_body: http_data_cb,
     on_message_complete: http_cb,
-};
+}
 
 type enum_http_parser_url_fields = c_uint;
 const UF_SCHEMA: u32 = 0_u32;

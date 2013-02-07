@@ -4,7 +4,7 @@ use std::net::url::Url;
 pub fn build_request(url: Url) -> ~str {
 
     let host = copy url.host;
-    let mut path = if url.path.is_not_empty() { copy url.path } else { ~"/" };
+    let mut path = if url.path.len() > 0 { copy url.path } else { ~"/" };
 
     if url.query.len() > 0 {
         let kvps = do url.query.map |pair| {

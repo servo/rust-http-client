@@ -10,7 +10,7 @@ use http_parser::bindgen::{http_parser_init, http_parser_execute};
 pub type HttpCallback = fn@() -> bool;
 pub type HttpDataCallback = fn@(data: ~[u8]) -> bool;
 
-pub type ParserCallbacks = {
+pub struct ParserCallbacks {
     on_message_begin: HttpCallback,
     on_url: HttpDataCallback,
     on_header_field: HttpDataCallback,
@@ -18,7 +18,7 @@ pub type ParserCallbacks = {
     on_headers_complete: HttpCallback,
     on_body: HttpDataCallback,
     on_message_complete: HttpCallback
-};
+}
 
 pub struct Parser {
     mut http_parser: http_parser::http_parser,
@@ -26,7 +26,7 @@ pub struct Parser {
 }
 
 pub fn Parser() -> Parser {
-    let http_parser = {
+    let http_parser = http_parser::struct_http_parser {
         _type_flags: 0,
         state: 0,
         header_state: 0,
@@ -41,9 +41,11 @@ pub fn Parser() -> Parser {
         data: null()
     };
 
-    unsafe { http_parser_init(to_unsafe_ptr(&http_parser), HTTP_RESPONSE) };
+    unsafe {
+        http_parser_init(&http_parser, HTTP_RESPONSE);
+    }
 
-    let settings = {
+    let settings = http_parser::struct_http_parser_settings {
         on_message_begin: on_message_begin,
         on_url: on_url,
         on_header_field: on_header_field,
@@ -61,12 +63,13 @@ pub fn Parser() -> Parser {
 
 impl Parser {
     fn execute(data: &[u8], callbacks: &ParserCallbacks) -> uint {
-        self.http_parser.data = to_unsafe_ptr(callbacks) as *c_void;
-        do vec::as_imm_buf(data) |buf, _i| {
-            unsafe {
-                http_parser_execute(to_unsafe_ptr(&self.http_parser),
-                                    to_unsafe_ptr(&self.settings),
-                                    buf as *c_char, data.len() as size_t) as uint
+        unsafe {
+            self.http_parser.data = to_unsafe_ptr(callbacks) as *c_void;
+            do vec::as_imm_buf(data) |buf, _| {
+                http_parser_execute(&self.http_parser,
+                                    &self.settings,
+                                    buf as *c_char,
+                                    data.len() as size_t) as uint
             }
         }
     }

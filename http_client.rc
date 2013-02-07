@@ -18,14 +18,14 @@ pub mod response_headers;
 pub mod http_parser;
 pub mod request;
 
-use ptr::to_unsafe_ptr;
-use oldcomm::{Port, Chan};
-use result::{Result, Ok, Err};
+use core::ptr::to_unsafe_ptr;
+use core::pipes::{Port, Chan};
+use core::result::{Result, Ok, Err};
 use std::net::ip::{
     get_addr, format_addr,
     IpAddr, IpGetAddrErr, Ipv4, Ipv6
 };
-use std::net::tcp::{connect, TcpSocket, TcpErrData};
+use std::net::tcp::{connect, TcpErrData, TcpSocket};
 use std::net::url;
 use std::net::url::Url;
 use std::uv_global_loop;
@@ -99,7 +99,7 @@ pub type DnsResolver = fn@(host: ~str) -> Result<~[IpAddr], IpGetAddrErr>;
 pub fn uv_dns_resolver() -> DnsResolver {
     let r: DnsResolver = |host: ~str| {
         let iotask = uv_global_loop::get();
-        get_addr(host.to_str(), iotask)
+        get_addr(host.to_str(), &iotask)
     };
     return r;
 }
@@ -109,7 +109,7 @@ pub fn uv_http_request(url: Url) -> HttpRequest<TcpSocket, UvConnectionFactory> 
 }
 
 #[allow(non_implicitly_copyable_typarams)]
-pub struct HttpRequest<C: Connection, CF: ConnectionFactory<C>> {
+pub struct HttpRequest<C, CF> {
     resolve_ip_addr: DnsResolver,
     connection_factory: CF,
     url: Url,
@@ -180,7 +180,7 @@ impl<C: Connection, CF: ConnectionFactory<C>> HttpRequest<C, CF> {
         // This unsafety is unfortunate but we can't capture self
         // into shared closures
         let unsafe_self = to_unsafe_ptr(&self);
-        let callbacks: ParserCallbacks = {
+        let callbacks = ParserCallbacks {
             on_message_begin: || unsafe { (*unsafe_self).on_message_begin() },
             on_url: |data| unsafe { (*unsafe_self).on_url(move data) },
             on_header_field: |data| unsafe { (*unsafe_self).on_header_field(move data) },
@@ -202,7 +202,7 @@ impl<C: Connection, CF: ConnectionFactory<C>> HttpRequest<C, CF> {
                 let bytes_parsed = self.parser.execute(next_data, &callbacks);
                 if bytes_parsed != next_data.len() {
                     // FIXME: Need tests
-                    fail ~"http parse failure";
+                    fail!(~"http parse failure");
                 }
             } else {
                 debug!("http_client: read error: %?", next_data);
@@ -231,7 +231,7 @@ impl<C: Connection, CF: ConnectionFactory<C>> HttpRequest<C, CF> {
             let ip_addrs = result::unwrap(move ip_addrs);
             // FIXME: This log crashes
             //#debug("http_client: got IP addresses for %?: %?", self.url, ip_addrs);
-            if ip_addrs.is_not_empty() {
+            if ip_addrs.len() != 0 {
                 // FIXME: Which address should we really pick?
                 let best_ip = do ip_addrs.find |ip| {
                     match *ip {
@@ -343,7 +343,7 @@ pub fn test_connect_success() {
 
     for events.each |ev| {
         match *ev {
-          Error(*) => { fail }
+          Error(*) => { fail!() }
           _ => { }
         }
     }
@@ -397,7 +397,7 @@ pub fn test_simple_response() {
         connect_fn: |_ip, _port| {
 
             // FIXME this doesn't work
-            fail;//ok(mock_connection)
+            fail!();//ok(mock_connection)
         }
     };
 }
