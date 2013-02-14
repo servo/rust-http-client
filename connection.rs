@@ -50,11 +50,11 @@ impl UvConnectionFactory : ConnectionFactory<TcpSocket> {
     }
 }
 
-pub type MockConnection = {
+pub struct MockConnection {
     write_fn: fn@(~[u8]) -> Result<(), TcpErrData>,
     read_start_fn: fn@() -> Result<@ReadPort, TcpErrData>,
     read_stop_fn: fn@(-port: @ReadPort) -> Result<(), TcpErrData>
-};
+}
 
 impl MockConnection : Connection {
     fn write_(data: ~[u8]) -> Result<(), TcpErrData> {
@@ -70,9 +70,9 @@ impl MockConnection : Connection {
     }
 }
 
-pub type MockConnectionFactory = {
+pub struct MockConnectionFactory {
     connect_fn: fn@(IpAddr, uint) -> Result<MockConnection, TcpConnectErrData>
-};
+}
 
 impl MockConnectionFactory : ConnectionFactory<MockConnection> {
     fn connect(ip: IpAddr, port: uint) -> Result<MockConnection, TcpConnectErrData> {

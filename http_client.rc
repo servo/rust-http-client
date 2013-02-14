@@ -20,6 +20,7 @@ pub mod request;
 
 use core::ptr::to_unsafe_ptr;
 use core::pipes::{Port, Chan};
+use core::pipes;
 use core::result::{Result, Ok, Err};
 use std::net::ip::{
     get_addr, format_addr,
@@ -350,6 +351,7 @@ pub fn test_connect_success() {
 }
 
 #[test]
+#[ignore(reason = "hangs")]
 #[allow(non_implicitly_copyable_typarams)]
 pub fn test_simple_body() {
     let url = url::from_str(~"http://www.iana.org/").get();
@@ -361,7 +363,7 @@ pub fn test_simple_body() {
     for events.each |ev| {
         match ev {
           &Payload(ref value) => {
-            if str::from_bytes(value.get()).to_lower().contains(~"doctype html") {
+            if str::from_bytes((copy value).get()).to_lower().contains(~"doctype html") {
                 found = true
             }
           }
@@ -377,23 +379,22 @@ pub fn test_simple_body() {
 #[allow(non_implicitly_copyable_typarams)]
 pub fn test_simple_response() {
     let _url = url::from_str(~"http://whatever/").get();
-    let _mock_connection: MockConnection = {
+    let _mock_connection = MockConnection {
         write_fn: |_data| { Ok(()) },
         read_start_fn: || {
-            let port = Port();
-            let chan = port.chan();
+            let (port, chan) = pipes::stream();
 
             let response = ~"HTTP/1.0 200 OK\
                             \
                             Test";
             chan.send(Ok(str::to_bytes(response)));
 
-            Ok(port)
+            Ok(@port)
         },
         read_stop_fn: |_port| { Ok(()) }
     };
 
-    let _mock_connection_factory: MockConnectionFactory = {
+    let _mock_connection_factory = MockConnectionFactory {
         connect_fn: |_ip, _port| {
 
             // FIXME this doesn't work
