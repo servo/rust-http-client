@@ -20,10 +20,10 @@ pub trait ConnectionFactory<C: Connection> {
     fn connect(ip: IpAddr, port: uint) -> Result<C, TcpConnectErrData>;
 }
 
-impl TcpSocket : Connection {
+impl Connection for TcpSocket {
     fn write_(data: ~[u8]) -> Result<(), TcpErrData> {
         use std::net::tcp::TcpSocket;
-        self.write(move data)
+        self.write(data)
     }
 
     fn read_start_() -> Result<@ReadPort, TcpErrData> {
@@ -41,7 +41,7 @@ pub enum UvConnectionFactory {
     UvConnectionFactory
 }
 
-impl UvConnectionFactory : ConnectionFactory<TcpSocket> {
+impl ConnectionFactory<TcpSocket> for UvConnectionFactory {
     fn connect(ip: IpAddr, port: uint) -> Result<TcpSocket, TcpConnectErrData> {
         use std::uv_global_loop;
         use std::net::tcp::connect;
@@ -56,9 +56,9 @@ pub struct MockConnection {
     read_stop_fn: fn@(-port: @ReadPort) -> Result<(), TcpErrData>
 }
 
-impl MockConnection : Connection {
+impl Connection for MockConnection {
     fn write_(data: ~[u8]) -> Result<(), TcpErrData> {
-        (self.write_fn)(move data)
+        (self.write_fn)(data)
     }
 
     fn read_start_() -> Result<@ReadPort, TcpErrData> {
@@ -74,8 +74,8 @@ pub struct MockConnectionFactory {
     connect_fn: fn@(IpAddr, uint) -> Result<MockConnection, TcpConnectErrData>
 }
 
-impl MockConnectionFactory : ConnectionFactory<MockConnection> {
+impl ConnectionFactory<MockConnection> for MockConnectionFactory {
     fn connect(ip: IpAddr, port: uint) -> Result<MockConnection, TcpConnectErrData> {
-        (self.connect_fn)(move ip, port)
+        (self.connect_fn)(ip, port)
     }
 }

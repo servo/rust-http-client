@@ -56,8 +56,8 @@ pub fn Parser() -> Parser {
     };
 
     Parser {
-        http_parser: move http_parser,
-        settings: move settings
+        http_parser: http_parser,
+        settings: settings
     }
 }
 
