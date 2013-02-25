@@ -19,7 +19,7 @@ pub mod http_parser;
 pub mod request;
 
 use core::ptr::to_unsafe_ptr;
-use core::pipes::{Port, Chan};
+use core::comm::{Port, Chan};
 use core::pipes;
 use core::result::{Result, Ok, Err};
 use std::net::ip::{
@@ -350,7 +350,7 @@ pub fn test_simple_response() {
     let _mock_connection = MockConnection {
         write_fn: |_data| { Ok(()) },
         read_start_fn: || {
-            let (port, chan) = pipes::stream();
+            let (port, chan) = comm::stream();
 
             let response = ~"HTTP/1.0 200 OK\
                             \
