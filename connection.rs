@@ -1,4 +1,4 @@
-use core::pipes::Port;
+use core::comm::Port;
 use std::net::tcp::{TcpErrData, TcpConnectErrData, TcpSocket};
 use std::net::ip::IpAddr;
 
