@@ -22,6 +22,7 @@ use core::ptr::to_unsafe_ptr;
 use core::comm::{Port, Chan};
 use core::pipes;
 use core::result::{Result, Ok, Err};
+use core::cell::Cell;
 use std::net::ip::{
     get_addr, format_addr,
     IpAddr, IpGetAddrErr, Ipv4, Ipv6
@@ -59,11 +60,11 @@ pub enum RequestError {
 #[deriving_eq]
 pub enum RequestEvent {
     Status(StatusCode),
-    Payload(~mut Option<~[u8]>),
+    Payload(Cell<~[u8]>),
     Error(RequestError)
 }
 
-pub type DnsResolver = fn@(host: ~str) -> Result<~[IpAddr], IpGetAddrErr>;
+pub type DnsResolver = @fn(host: ~str) -> Result<~[IpAddr], IpGetAddrErr>;
 
 pub fn uv_dns_resolver() -> DnsResolver {
     let r: DnsResolver = |host: ~str| {
@@ -83,7 +84,7 @@ pub struct HttpRequest<C, CF> {
     connection_factory: CF,
     url: Url,
     parser: Parser,
-    mut cb: fn@(+ev: RequestEvent)
+    cb: @fn(+ev: RequestEvent)
 }
 
 pub fn HttpRequest<C: Connection, CF: ConnectionFactory<C>>(resolver: DnsResolver,
@@ -100,8 +101,8 @@ pub fn HttpRequest<C: Connection, CF: ConnectionFactory<C>>(resolver: DnsResolve
 }
 
 #[allow(non_implicitly_copyable_typarams)]
-impl<C: Connection, CF: ConnectionFactory<C>> HttpRequest<C, CF> {
-    fn begin(cb: fn@(ev: RequestEvent)) {
+pub impl<C: Connection, CF: ConnectionFactory<C>> HttpRequest<C, CF> {
+    fn begin(&mut self, cb: @fn(ev: RequestEvent)) {
         debug!("http_client: looking up url %?", self.url.to_str());
         let ip_addr = match self.get_ip() {
           Ok(addr) => { copy addr }
@@ -194,7 +195,7 @@ impl<C: Connection, CF: ConnectionFactory<C>> HttpRequest<C, CF> {
         socket.read_stop_(read_port);
     }
 
-    fn get_ip() -> Result<IpAddr, RequestError> {
+    fn get_ip(&self) -> Result<IpAddr, RequestError> {
         let ip_addrs = (self.resolve_ip_addr)(copy self.url.host);
         if ip_addrs.is_ok() {
             let ip_addrs = result::unwrap(ip_addrs);
@@ -226,48 +227,48 @@ impl<C: Connection, CF: ConnectionFactory<C>> HttpRequest<C, CF> {
         }
     }
 
-    fn on_message_begin() -> bool {
+    fn on_message_begin(&self) -> bool {
         debug!("on_message_begin");
         true
     }
 
-    fn on_url(_data: ~[u8]) -> bool {
+    fn on_url(&self, _data: ~[u8]) -> bool {
         debug!("on_url");
         true
     }
 
-    fn on_header_field(data: ~[u8]) -> bool {
+    fn on_header_field(&self, data: ~[u8]) -> bool {
         let header_field = str::from_bytes(data);
         debug!("on_header_field: %?", header_field);
         true
     }
 
-    fn on_header_value(data: ~[u8]) -> bool {
+    fn on_header_value(&self, data: ~[u8]) -> bool {
         let header_value = str::from_bytes(data);
         debug!("on_header_value: %?", header_value);
         true
     }
 
-    fn on_headers_complete() -> bool {
+    fn on_headers_complete(&self) -> bool {
         debug!("on_headers_complete");
         true
     }
 
-    fn on_body(data: ~[u8]) -> bool {
+    fn on_body(&self, data: ~[u8]) -> bool {
         debug!("on_body");
-        let the_payload = Payload(~mut Some(data));
+        let mut the_payload = Payload(Cell(data));
         (self.cb)(the_payload);
         true
     }
 
-    fn on_message_complete() -> bool {
+    fn on_message_complete(&self) -> bool {
         debug!("on_message_complete");
         true
     }
 }
 
 #[allow(non_implicitly_copyable_typarams)]
-pub fn sequence<C: Connection, CF: ConnectionFactory<C>>(request: HttpRequest<C, CF>) -> 
+pub fn sequence<C: Connection, CF: ConnectionFactory<C>>(request: &mut HttpRequest<C, CF>) -> 
     ~[RequestEvent] {
     
     let events = @mut ~[];

@@ -1,14 +1,14 @@
 //! Higher-level Rust constructs for http_parser
 
 use http_parser;
-use vec::raw::from_buf_raw;
-use libc::{c_int, c_void, c_char, size_t};
-use ptr::{null, to_unsafe_ptr};
+use core::vec::raw::from_buf_raw;
+use core::libc::{c_int, c_void, c_char, size_t};
+use core::ptr::{null, to_unsafe_ptr};
 use http_parser::{http_parser_settings, HTTP_RESPONSE};
 use http_parser::bindgen::{http_parser_init, http_parser_execute};
 
-pub type HttpCallback = fn@() -> bool;
-pub type HttpDataCallback = fn@(data: ~[u8]) -> bool;
+pub type HttpCallback = @fn() -> bool;
+pub type HttpDataCallback = @fn(data: ~[u8]) -> bool;
 
 pub struct ParserCallbacks {
     on_message_begin: HttpCallback,
@@ -21,7 +21,7 @@ pub struct ParserCallbacks {
 }
 
 pub struct Parser {
-    mut http_parser: http_parser::http_parser,
+    http_parser: http_parser::http_parser,
     settings: http_parser_settings
 }
 
@@ -61,8 +61,8 @@ pub fn Parser() -> Parser {
     }
 }
 
-impl Parser {
-    fn execute(data: &[u8], callbacks: &ParserCallbacks) -> uint {
+pub impl Parser {
+    fn execute(&mut self, data: &[u8], callbacks: &ParserCallbacks) -> uint {
         unsafe {
             self.http_parser.data = to_unsafe_ptr(callbacks) as *c_void;
             do vec::as_imm_buf(data) |buf, _| {
@@ -74,7 +74,7 @@ impl Parser {
         }
     }
 
-    fn status_code() -> uint {
+    fn status_code(&self) -> uint {
         self.http_parser.status_code as uint
     }
 }
