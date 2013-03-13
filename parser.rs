@@ -81,7 +81,7 @@ pub impl Parser {
 
 fn callbacks(http_parser: *http_parser::http_parser) -> *ParserCallbacks {
     unsafe {
-        assert (*http_parser).data.is_not_null();
+        fail_unless!((*http_parser).data.is_not_null());
         return (*http_parser).data as *ParserCallbacks;
     }
 }

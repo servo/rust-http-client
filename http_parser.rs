@@ -50,9 +50,9 @@ type __off64_t = c_long;
 
 type __pid_t = c_int;
 
-type __fsid_t = {
+struct __fsid_t {
     __val: (c_int,c_int),
-};
+}
 
 type __clock_t = c_long;
 
@@ -182,29 +182,29 @@ type register_t = c_long;
 
 type __sig_atomic_t = c_int;
 
-type __sigset_t = {
+struct __sigset_t {
     __val: (c_ulong,c_ulong,c_ulong,c_ulong,c_ulong,c_ulong,c_ulong,c_ulong,c_ulong,c_ulong,c_ulong,c_ulong,c_ulong,c_ulong,c_ulong,c_ulong),
-};
+}
 
 type sigset_t = __sigset_t;
 
-type struct_timespec = {
+struct struct_timespec {
     tv_sec: __time_t,
     tv_nsec: c_long,
-};
+}
 
-type struct_timeval = {
+struct struct_timeval {
     tv_sec: __time_t,
     tv_usec: __suseconds_t,
-};
+}
 
 type suseconds_t = __suseconds_t;
 
 type __fd_mask = c_long;
 
-type fd_set = {
+struct fd_set {
     __fds_bits: (__fd_mask,__fd_mask,__fd_mask,__fd_mask,__fd_mask,__fd_mask,__fd_mask,__fd_mask,__fd_mask,__fd_mask,__fd_mask,__fd_mask,__fd_mask,__fd_mask,__fd_mask,__fd_mask),
-};
+}
 
 type fd_mask = __fd_mask;
 
@@ -220,14 +220,14 @@ type pthread_t = c_ulong;
 
 type pthread_attr_t = c_void /* FIXME: union type */;
 
-type struct___pthread_internal_list = {
+struct struct___pthread_internal_list {
     __prev: *c_void /* struct___pthread_internal_list */,
     __next: *c_void /* struct___pthread_internal_list */,
-};
+}
 
 type __pthread_list_t = struct___pthread_internal_list;
 
-type struct___pthread_mutex_s = {
+struct struct___pthread_mutex_s {
     __lock: c_int,
     __count: c_uint,
     __owner: c_int,
@@ -235,7 +235,7 @@ type struct___pthread_mutex_s = {
     __kind: c_int,
     __spins: c_int,
     __list: __pthread_list_t,
-};
+}
 
 type pthread_mutex_t = c_void /* FIXME: union type */;
 
@@ -421,13 +421,13 @@ const UF_QUERY: u32 = 4_u32;
 const UF_FRAGMENT: u32 = 5_u32;
 const UF_MAX: u32 = 6_u32;
 
-type struct_http_parser_url = {
+struct struct_http_parser_url {
     field_set: uint16_t,
     port: uint16_t,
     field_data: (struct_unnamed1,struct_unnamed1,struct_unnamed1,struct_unnamed1,struct_unnamed1,struct_unnamed1),
-};
+}
 
-type struct_unnamed2 = {
+struct struct_unnamed2 {
     __lock: c_int,
     __nr_readers: c_uint,
     __readers_wakeup: c_uint,
@@ -439,9 +439,9 @@ type struct_unnamed2 = {
     __pad1: c_ulong,
     __pad2: c_ulong,
     __flags: c_uint,
-};
+}
 
-type struct_unnamed3 = {
+struct struct_unnamed3 {
     __lock: c_int,
     __futex: c_uint,
     __total_seq: c_ulonglong,
@@ -450,12 +450,12 @@ type struct_unnamed3 = {
     __mutex: *c_void,
     __nwaiters: c_uint,
     __broadcast_seq: c_uint,
-};
+}
 
-type struct_unnamed1 = {
+struct struct_unnamed1 {
     off: uint16_t,
     len: uint16_t,
-};
+}
 
 #[nolink]
 #[link_args = "-L. -lhttp_parser"]

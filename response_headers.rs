@@ -2,6 +2,6 @@ enum ResponseHeader {
     Unknown(~str)
 }
 
-type ResponseHeaderBlock = {
+struct ResponseHeaderBlock {
     headers: ~[ResponseHeader]
-};
+}

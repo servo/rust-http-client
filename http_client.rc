@@ -285,9 +285,9 @@ pub fn test_resolve_error() {
     let request = uv_http_request(url);
     let events = sequence(request);
 
-    assert events == ~[
+    fail_unless!(events == ~[
         Error(ErrorDnsResolution),
-    ];
+    ]);
 }
 
 #[test]
@@ -299,9 +299,9 @@ pub fn test_connect_error() {
     let request = uv_http_request(url);
     let events = sequence(request);
 
-    assert events == ~[
+    fail_unless!(events == ~[
         Error(ErrorConnect),
-    ];
+    ]);
 }
 
 #[test]
@@ -340,7 +340,7 @@ pub fn test_simple_body() {
         }
     }
 
-    assert found;
+    fail_unless!(found);
 }
 
 #[test]
