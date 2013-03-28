@@ -12,15 +12,7 @@ A simple HTTP client in Rust
 
 extern mod std;
 
-pub mod connection;
-pub mod parser;
-pub mod response_headers;
-pub mod http_parser;
-pub mod request;
-
 use core::ptr::to_unsafe_ptr;
-use core::comm::{Port, Chan};
-use core::pipes;
 use core::result::{Result, Ok, Err};
 use core::cell::Cell;
 use std::net::ip::{
@@ -28,7 +20,6 @@ use std::net::ip::{
     IpAddr, IpGetAddrErr, Ipv4, Ipv6
 };
 use std::net::tcp::{connect, TcpErrData, TcpSocket};
-use std::net::url;
 use std::net::url::Url;
 use std::uv_global_loop;
 use connection::{
@@ -38,10 +29,16 @@ use connection::{
 use parser::{Parser, ParserCallbacks};
 use request::build_request;
 
-pub const timeout: uint = 2000;
+pub mod connection;
+pub mod parser;
+pub mod response_headers;
+pub mod http_parser;
+pub mod request;
+
+pub static timeout: uint = 2000;
 
 /// HTTP status codes
-#[deriving_eq]
+#[deriving(Eq)]
 pub enum StatusCode {
     StatusOk = 200,
     StatusFound = 302,
@@ -49,7 +46,7 @@ pub enum StatusCode {
 }
 
 /// HTTP request error conditions
-#[deriving_eq]
+#[deriving(Eq)]
 pub enum RequestError {
     ErrorDnsResolution,
     ErrorConnect,
@@ -57,7 +54,7 @@ pub enum RequestError {
 }
 
 /// Request 
-#[deriving_eq]
+#[deriving(Eq)]
 pub enum RequestEvent {
     Status(StatusCode),
     Payload(Cell<~[u8]>),
@@ -211,7 +208,7 @@ pub impl<C: Connection, CF: ConnectionFactory<C>> HttpRequest<C, CF> {
                 };
 
                 if best_ip.is_some() {
-                    return Ok(option::unwrap(best_ip));
+                    return Ok(best_ip.unwrap());
                 } else {
                     // FIXME: Need test
                     return Err(ErrorMisc);
