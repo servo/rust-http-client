@@ -22,17 +22,14 @@ pub trait ConnectionFactory<C: Connection> {
 
 impl Connection for TcpSocket {
     fn write_(&self, data: ~[u8]) -> Result<(), TcpErrData> {
-        use std::net::tcp::TcpSocket;
         self.write(data)
     }
 
     fn read_start_(&self) -> Result<@ReadPort, TcpErrData> {
-        use std::net::tcp::TcpSocket;
         self.read_start()
     }
 
     fn read_stop_(&self, _read_port: @ReadPort) -> Result<(), TcpErrData> {
-        use std::net::tcp::TcpSocket;
         self.read_stop()
     }
 }
@@ -53,7 +50,7 @@ impl ConnectionFactory<TcpSocket> for UvConnectionFactory {
 pub struct MockConnection {
     write_fn: @fn(~[u8]) -> Result<(), TcpErrData>,
     read_start_fn: @fn() -> Result<@ReadPort, TcpErrData>,
-    read_stop_fn: @fn(-port: @ReadPort) -> Result<(), TcpErrData>
+    read_stop_fn: @fn(port: @ReadPort) -> Result<(), TcpErrData>
 }
 
 impl Connection for MockConnection {
