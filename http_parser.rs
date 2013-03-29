@@ -316,76 +316,76 @@ type http_data_cb = *u8;
 type http_cb = *u8;
 
 type enum_http_method = c_uint;
-const HTTP_DELETE: u32 = 0_u32;
-const HTTP_GET: u32 = 1_u32;
-const HTTP_HEAD: u32 = 2_u32;
-const HTTP_POST: u32 = 3_u32;
-const HTTP_PUT: u32 = 4_u32;
-const HTTP_CONNECT: u32 = 5_u32;
-const HTTP_OPTIONS: u32 = 6_u32;
-const HTTP_TRACE: u32 = 7_u32;
-const HTTP_COPY: u32 = 8_u32;
-const HTTP_LOCK: u32 = 9_u32;
-const HTTP_MKCOL: u32 = 10_u32;
-const HTTP_MOVE: u32 = 11_u32;
-const HTTP_PROPFIND: u32 = 12_u32;
-const HTTP_PROPPATCH: u32 = 13_u32;
-const HTTP_SEARCH: u32 = 14_u32;
-const HTTP_UNLOCK: u32 = 15_u32;
-const HTTP_REPORT: u32 = 16_u32;
-const HTTP_MKACTIVITY: u32 = 17_u32;
-const HTTP_CHECKOUT: u32 = 18_u32;
-const HTTP_MERGE: u32 = 19_u32;
-const HTTP_MSEARCH: u32 = 20_u32;
-const HTTP_NOTIFY: u32 = 21_u32;
-const HTTP_SUBSCRIBE: u32 = 22_u32;
-const HTTP_UNSUBSCRIBE: u32 = 23_u32;
-const HTTP_PATCH: u32 = 24_u32;
-const HTTP_PURGE: u32 = 25_u32;
+static HTTP_DELETE: u32 = 0_u32;
+static HTTP_GET: u32 = 1_u32;
+static HTTP_HEAD: u32 = 2_u32;
+static HTTP_POST: u32 = 3_u32;
+static HTTP_PUT: u32 = 4_u32;
+static HTTP_CONNECT: u32 = 5_u32;
+static HTTP_OPTIONS: u32 = 6_u32;
+static HTTP_TRACE: u32 = 7_u32;
+static HTTP_COPY: u32 = 8_u32;
+static HTTP_LOCK: u32 = 9_u32;
+static HTTP_MKCOL: u32 = 10_u32;
+static HTTP_MOVE: u32 = 11_u32;
+static HTTP_PROPFIND: u32 = 12_u32;
+static HTTP_PROPPATCH: u32 = 13_u32;
+static HTTP_SEARCH: u32 = 14_u32;
+static HTTP_UNLOCK: u32 = 15_u32;
+static HTTP_REPORT: u32 = 16_u32;
+static HTTP_MKACTIVITY: u32 = 17_u32;
+static HTTP_CHECKOUT: u32 = 18_u32;
+static HTTP_MERGE: u32 = 19_u32;
+static HTTP_MSEARCH: u32 = 20_u32;
+static HTTP_NOTIFY: u32 = 21_u32;
+static HTTP_SUBSCRIBE: u32 = 22_u32;
+static HTTP_UNSUBSCRIBE: u32 = 23_u32;
+static HTTP_PATCH: u32 = 24_u32;
+static HTTP_PURGE: u32 = 25_u32;
 
 type enum_http_parser_type = c_uint;
-const HTTP_REQUEST: u32 = 0_u32;
-pub const HTTP_RESPONSE: u32 = 1_u32;
-const HTTP_BOTH: u32 = 2_u32;
+static HTTP_REQUEST: u32 = 0_u32;
+pub static HTTP_RESPONSE: u32 = 1_u32;
+static HTTP_BOTH: u32 = 2_u32;
 
 type enum_flags = c_uint;
-const F_CHUNKED: u32 = 1_u32;
-const F_CONNECTION_KEEP_ALIVE: u32 = 2_u32;
-const F_CONNECTION_CLOSE: u32 = 4_u32;
-const F_TRAILING: u32 = 8_u32;
-const F_UPGRADE: u32 = 16_u32;
-const F_SKIPBODY: u32 = 32_u32;
+static F_CHUNKED: u32 = 1_u32;
+static F_CONNECTION_KEEP_ALIVE: u32 = 2_u32;
+static F_CONNECTION_CLOSE: u32 = 4_u32;
+static F_TRAILING: u32 = 8_u32;
+static F_UPGRADE: u32 = 16_u32;
+static F_SKIPBODY: u32 = 32_u32;
 
 type enum_http_errno = c_uint;
-const HPE_OK: u32 = 0_u32;
-const HPE_CB_message_begin: u32 = 1_u32;
-const HPE_CB_url: u32 = 2_u32;
-const HPE_CB_header_field: u32 = 3_u32;
-const HPE_CB_header_value: u32 = 4_u32;
-const HPE_CB_headers_complete: u32 = 5_u32;
-const HPE_CB_body: u32 = 6_u32;
-const HPE_CB_message_complete: u32 = 7_u32;
-const HPE_INVALID_EOF_STATE: u32 = 8_u32;
-const HPE_HEADER_OVERFLOW: u32 = 9_u32;
-const HPE_CLOSED_CONNECTION: u32 = 10_u32;
-const HPE_INVALID_VERSION: u32 = 11_u32;
-const HPE_INVALID_STATUS: u32 = 12_u32;
-const HPE_INVALID_METHOD: u32 = 13_u32;
-const HPE_INVALID_URL: u32 = 14_u32;
-const HPE_INVALID_HOST: u32 = 15_u32;
-const HPE_INVALID_PORT: u32 = 16_u32;
-const HPE_INVALID_PATH: u32 = 17_u32;
-const HPE_INVALID_QUERY_STRING: u32 = 18_u32;
-const HPE_INVALID_FRAGMENT: u32 = 19_u32;
-const HPE_LF_EXPECTED: u32 = 20_u32;
-const HPE_INVALID_HEADER_TOKEN: u32 = 21_u32;
-const HPE_INVALID_CONTENT_LENGTH: u32 = 22_u32;
-const HPE_INVALID_CHUNK_SIZE: u32 = 23_u32;
-const HPE_INVALID_CONSTANT: u32 = 24_u32;
-const HPE_INVALID_INTERNAL_STATE: u32 = 25_u32;
-const HPE_STRICT: u32 = 26_u32;
-const HPE_PAUSED: u32 = 27_u32;
-const HPE_UNKNOWN: u32 = 28_u32;
+static HPE_OK: u32 = 0_u32;
+static HPE_CB_message_begin: u32 = 1_u32;
+static HPE_CB_url: u32 = 2_u32;
+static HPE_CB_header_field: u32 = 3_u32;
+static HPE_CB_header_value: u32 = 4_u32;
+static HPE_CB_headers_complete: u32 = 5_u32;
+static HPE_CB_body: u32 = 6_u32;
+static HPE_CB_message_complete: u32 = 7_u32;
+static HPE_INVALID_EOF_STATE: u32 = 8_u32;
+static HPE_HEADER_OVERFLOW: u32 = 9_u32;
+static HPE_CLOSED_CONNECTION: u32 = 10_u32;
+static HPE_INVALID_VERSION: u32 = 11_u32;
+static HPE_INVALID_STATUS: u32 = 12_u32;
+static HPE_INVALID_METHOD: u32 = 13_u32;
+static HPE_INVALID_URL: u32 = 14_u32;
+static HPE_INVALID_HOST: u32 = 15_u32;
+static HPE_INVALID_PORT: u32 = 16_u32;
+static HPE_INVALID_PATH: u32 = 17_u32;
+static HPE_INVALID_QUERY_STRING: u32 = 18_u32;
+static HPE_INVALID_FRAGMENT: u32 = 19_u32;
+static HPE_LF_EXPECTED: u32 = 20_u32;
+static HPE_INVALID_HEADER_TOKEN: u32 = 21_u32;
+static HPE_INVALID_CONTENT_LENGTH: u32 = 22_u32;
+static HPE_INVALID_CHUNK_SIZE: u32 = 23_u32;
+static HPE_INVALID_CONSTANT: u32 = 24_u32;
+static HPE_INVALID_INTERNAL_STATE: u32 = 25_u32;
+static HPE_STRICT: u32 = 26_u32;
+static HPE_PAUSED: u32 = 27_u32;
+static HPE_UNKNOWN: u32 = 28_u32;
 
 pub struct struct_http_parser {
     _type_flags: c_uchar,
@@ -413,13 +413,13 @@ pub struct struct_http_parser_settings {
 }
 
 type enum_http_parser_url_fields = c_uint;
-const UF_SCHEMA: u32 = 0_u32;
-const UF_HOST: u32 = 1_u32;
-const UF_PORT: u32 = 2_u32;
-const UF_PATH: u32 = 3_u32;
-const UF_QUERY: u32 = 4_u32;
-const UF_FRAGMENT: u32 = 5_u32;
-const UF_MAX: u32 = 6_u32;
+static UF_SCHEMA: u32 = 0_u32;
+static UF_HOST: u32 = 1_u32;
+static UF_PORT: u32 = 2_u32;
+static UF_PATH: u32 = 3_u32;
+static UF_QUERY: u32 = 4_u32;
+static UF_FRAGMENT: u32 = 5_u32;
+static UF_MAX: u32 = 6_u32;
 
 struct struct_http_parser_url {
     field_set: uint16_t,
@@ -459,7 +459,7 @@ struct struct_unnamed1 {
 
 #[nolink]
 #[link_args = "-L. -lhttp_parser"]
-extern mod bindgen {
+pub extern mod bindgen {
 
 fn http_parser_init(++parser: *http_parser, ++_type: enum_http_parser_type);
 

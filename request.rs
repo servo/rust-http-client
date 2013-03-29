@@ -1,4 +1,3 @@
-use std::net::url;
 use std::net::url::Url;
 
 pub fn build_request(url: Url) -> ~str {
