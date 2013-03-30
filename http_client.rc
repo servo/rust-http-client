@@ -20,7 +20,7 @@ use std::net::ip::{
     IpAddr, IpGetAddrErr, Ipv4, Ipv6
 };
 use std::net::tcp::{connect, TcpErrData, TcpSocket};
-use std::net::url::Url;
+use std::net::url;
 use std::uv_global_loop;
 use connection::{
     Connection, ConnectionFactory, UvConnectionFactory,
@@ -53,7 +53,7 @@ pub enum RequestError {
     ErrorMisc
 }
 
-/// Request 
+/// Request
 #[deriving(Eq)]
 pub enum RequestEvent {
     Status(StatusCode),
@@ -71,7 +71,7 @@ pub fn uv_dns_resolver() -> DnsResolver {
     return r;
 }
 
-pub fn uv_http_request(url: Url) -> HttpRequest<TcpSocket, UvConnectionFactory> {
+pub fn uv_http_request(url: url::Url) -> HttpRequest<TcpSocket, UvConnectionFactory> {
     HttpRequest(uv_dns_resolver(), UvConnectionFactory, url)
 }
 
@@ -79,14 +79,14 @@ pub fn uv_http_request(url: Url) -> HttpRequest<TcpSocket, UvConnectionFactory> 
 pub struct HttpRequest<C, CF> {
     resolve_ip_addr: DnsResolver,
     connection_factory: CF,
-    url: Url,
+    url: url::Url,
     parser: Parser,
     cb: @fn(+ev: RequestEvent)
 }
 
 pub fn HttpRequest<C: Connection, CF: ConnectionFactory<C>>(resolver: DnsResolver,
                                                             connection_factory: CF,
-                                                            url: Url) ->
+                                                            url: url::Url) ->
                                                             HttpRequest<C,CF> {
     HttpRequest {
         resolve_ip_addr: resolver,
@@ -265,9 +265,9 @@ pub impl<C: Connection, CF: ConnectionFactory<C>> HttpRequest<C, CF> {
 }
 
 #[allow(non_implicitly_copyable_typarams)]
-pub fn sequence<C: Connection, CF: ConnectionFactory<C>>(request: &mut HttpRequest<C, CF>) -> 
+pub fn sequence<C: Connection, CF: ConnectionFactory<C>>(request: &mut HttpRequest<C, CF>) ->
     ~[RequestEvent] {
-    
+
     let events = @mut ~[];
     do request.begin |event| {
         vec::push(&mut *events, event)
@@ -279,8 +279,8 @@ pub fn sequence<C: Connection, CF: ConnectionFactory<C>>(request: &mut HttpReque
 #[allow(non_implicitly_copyable_typarams)]
 pub fn test_resolve_error() {
     let url = url::from_str(~"http://example.com_not_real/").get();
-    let request = uv_http_request(url);
-    let events = sequence(request);
+    let mut request = uv_http_request(url);
+    let events = sequence(&mut request);
 
     assert!(events == ~[
         Error(ErrorDnsResolution),
@@ -293,8 +293,8 @@ pub fn test_connect_error() {
     // This address is invalid because the first octet
     // of a class A address cannot be 0
     let url = url::from_str(~"http://0.42.42.42/").get();
-    let request = uv_http_request(url);
-    let events = sequence(request);
+    let mut request = uv_http_request(url);
+    let events = sequence(&mut request);
 
     assert!(events == ~[
         Error(ErrorConnect),
@@ -305,8 +305,8 @@ pub fn test_connect_error() {
 #[allow(non_implicitly_copyable_typarams)]
 pub fn test_connect_success() {
     let url = url::from_str(~"http://example.com/").get();
-    let request = uv_http_request(url);
-    let events = sequence(request);
+    let mut request = uv_http_request(url);
+    let events = sequence(&mut request);
 
     for events.each |ev| {
         match *ev {
@@ -321,15 +321,15 @@ pub fn test_connect_success() {
 #[allow(non_implicitly_copyable_typarams)]
 pub fn test_simple_body() {
     let url = url::from_str(~"http://www.iana.org/").get();
-    let request = uv_http_request(url);
-    let events = sequence(request);
+    let mut request = uv_http_request(url);
+    let events = sequence(&mut request);
 
     let mut found = false;
 
     for events.each |ev| {
         match ev {
           &Payload(ref value) => {
-            if str::from_bytes((copy value).get()).to_lower().contains(~"doctype html") {
+            if str::from_bytes((copy value).take()).to_lower().contains(~"doctype html") {
                 found = true
             }
           }

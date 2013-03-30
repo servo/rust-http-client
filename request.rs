@@ -1,6 +1,6 @@
-use std::net::url::Url;
+use std::net::url;
 
-pub fn build_request(url: Url) -> ~str {
+pub fn build_request(url: url::Url) -> ~str {
 
     let host = copy url.host;
     let mut path = if url.path.len() > 0 { copy url.path } else { ~"/" };
