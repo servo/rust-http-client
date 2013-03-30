@@ -1,4 +1,4 @@
-#[pkg(id = "http-client",
+#[pkg(id = "http_client",
       vers = "0.1.0")];
 
 use core::run;
