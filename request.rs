@@ -1,6 +1,6 @@
-use std::net::url::Url;
+use std::net::url;
 
-pub fn build_request(url: Url) -> ~str {
+pub fn build_request(url: url::Url) -> ~str {
 
     let host = copy url.host;
     let mut path = if url.path.len() > 0 { copy url.path } else { ~"/" };
@@ -24,7 +24,7 @@ pub fn build_request(url: Url) -> ~str {
 #[allow(non_implicitly_copyable_typarams)]
 fn should_request_slash_when_path_is_empty() {
     let url = url::from_str(~"http://host").get();
-    fail_unless!(url.path.is_empty());
+    assert!(url.path.is_empty());
     let headers = build_request(url);
-    fail_unless!(headers.contains(~"GET / "));
+    assert!(headers.contains(~"GET / "));
 }

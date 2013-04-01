@@ -2,3 +2,7 @@ http_client
 *~
 *.so
 *.dylib
+*.a
+*.dummy
+*.o
+Makefile
