@@ -19,12 +19,11 @@ use std::net::ip::{
     get_addr, format_addr,
     IpAddr, IpGetAddrErr, Ipv4, Ipv6
 };
-use std::net::tcp::{connect, TcpErrData, TcpSocket};
+use std::net::tcp::{TcpErrData, TcpSocket};
 use std::net::url::Url;
 use std::uv_global_loop;
 use connection::{
-    Connection, ConnectionFactory, UvConnectionFactory,
-    MockConnection, MockConnectionFactory
+    Connection, ConnectionFactory, UvConnectionFactory
 };
 use parser::{Parser, ParserCallbacks};
 use request::build_request;
