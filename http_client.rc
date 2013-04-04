@@ -277,11 +277,12 @@ pub fn sequence<C: Connection, CF: ConnectionFactory<C>>(request: &mut HttpReque
 #[test]
 #[allow(non_implicitly_copyable_typarams)]
 pub fn test_resolve_error() {
+    use std::net::url;
     let url = url::from_str(~"http://example.com_not_real/").get();
-    let request = uv_http_request(url);
-    let events = sequence(request);
+    let mut request = uv_http_request(url);
+    let events = sequence(&mut request);
 
-    fail_unless!(events == ~[
+    assert!(events == ~[
         Error(ErrorDnsResolution),
     ]);
 }
@@ -291,11 +292,12 @@ pub fn test_resolve_error() {
 pub fn test_connect_error() {
     // This address is invalid because the first octet
     // of a class A address cannot be 0
+    use std::net::url;
     let url = url::from_str(~"http://0.42.42.42/").get();
-    let request = uv_http_request(url);
-    let events = sequence(request);
+    let mut request = uv_http_request(url);
+    let events = sequence(&mut request);
 
-    fail_unless!(events == ~[
+    assert!(events == ~[
         Error(ErrorConnect),
     ]);
 }
@@ -303,9 +305,10 @@ pub fn test_connect_error() {
 #[test]
 #[allow(non_implicitly_copyable_typarams)]
 pub fn test_connect_success() {
+    use std::net::url;
     let url = url::from_str(~"http://example.com/").get();
-    let request = uv_http_request(url);
-    let events = sequence(request);
+    let mut request = uv_http_request(url);
+    let events = sequence(&mut request);
 
     for events.each |ev| {
         match *ev {
@@ -319,16 +322,17 @@ pub fn test_connect_success() {
 #[ignore(reason = "hangs")]
 #[allow(non_implicitly_copyable_typarams)]
 pub fn test_simple_body() {
+    use std::net::url;
     let url = url::from_str(~"http://www.iana.org/").get();
-    let request = uv_http_request(url);
-    let events = sequence(request);
+    let mut request = uv_http_request(url);
+    let events = sequence(&mut request);
 
     let mut found = false;
 
     for events.each |ev| {
         match ev {
           &Payload(ref value) => {
-            if str::from_bytes((copy value).get()).to_lower().contains(~"doctype html") {
+            if str::from_bytes((copy value).take()).to_lower().contains(~"doctype html") {
                 found = true
             }
           }
@@ -336,13 +340,15 @@ pub fn test_simple_body() {
         }
     }
 
-    fail_unless!(found);
+    assert!(found);
 }
 
 #[test]
 #[ignore(reason = "ICE")]
 #[allow(non_implicitly_copyable_typarams)]
 pub fn test_simple_response() {
+    use std::net::url;
+    use connection::{MockConnection, MockConnectionFactory};
     let _url = url::from_str(~"http://whatever/").get();
     let _mock_connection = MockConnection {
         write_fn: |_data| { Ok(()) },
