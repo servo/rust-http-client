@@ -23,8 +23,9 @@ pub fn build_request(url: Url) -> ~str {
 #[test]
 #[allow(non_implicitly_copyable_typarams)]
 fn should_request_slash_when_path_is_empty() {
+    use std::net::url;
     let url = url::from_str(~"http://host").get();
-    fail_unless!(url.path.is_empty());
+    assert!(url.path.is_empty());
     let headers = build_request(url);
-    fail_unless!(headers.contains(~"GET / "));
+    assert!(headers.contains(~"GET / "));
 }
