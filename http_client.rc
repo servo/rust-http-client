@@ -328,31 +328,6 @@ pub fn test_connect_success() {
 }
 
 #[test]
-#[ignore(reason = "hangs")]
-#[allow(non_implicitly_copyable_typarams)]
-pub fn test_simple_body() {
-    use std::net::url;
-    let url = url::from_str(~"http://www.iana.org/").get();
-    let mut request = uv_http_request(url);
-    let events = sequence(&mut request);
-
-    let mut found = false;
-
-    for events.each |ev| {
-        match ev {
-          &Payload(ref value) => {
-            if str::from_bytes((copy value).take()).to_lower().contains(~"doctype html") {
-                found = true
-            }
-          }
-          _ => { }
-        }
-    }
-
-    assert!(found);
-}
-
-#[test]
 #[ignore(reason = "ICE")]
 #[allow(non_implicitly_copyable_typarams)]
 pub fn test_simple_response() {
