@@ -470,20 +470,20 @@ struct struct_unnamed1 {
 #[link_args = "-L. -lhttp_parser"]
 pub extern mod bindgen {
 
-fn http_parser_init(++parser: *http_parser, ++_type: enum_http_parser_type);
+fn http_parser_init(parser: *http_parser, _type: enum_http_parser_type);
 
-fn http_parser_execute(++parser: *http_parser, ++settings: *http_parser_settings, ++data: *c_char, ++len: size_t) -> size_t;
+fn http_parser_execute(parser: *http_parser, settings: *http_parser_settings, data: *c_char, len: size_t) -> size_t;
 
-fn http_should_keep_alive(++parser: *http_parser) -> c_int;
+fn http_should_keep_alive(parser: *http_parser) -> c_int;
 
-fn http_method_str(++m: enum_http_method) -> *c_char;
+fn http_method_str(m: enum_http_method) -> *c_char;
 
-fn http_errno_name(++err: enum_http_errno) -> *c_char;
+fn http_errno_name(err: enum_http_errno) -> *c_char;
 
-fn http_errno_description(++err: enum_http_errno) -> *c_char;
+fn http_errno_description(err: enum_http_errno) -> *c_char;
 
-fn http_parser_parse_url(++buf: *c_char, ++buflen: size_t, ++is_connect: c_int, ++u: *struct_http_parser_url) -> c_int;
+fn http_parser_parse_url(buf: *c_char, buflen: size_t, is_connect: c_int, u: *struct_http_parser_url) -> c_int;
 
-fn http_parser_pause(++parser: *http_parser, ++paused: c_int);
+fn http_parser_pause(parser: *http_parser, paused: c_int);
 
 }
