@@ -89,7 +89,7 @@ pub struct HttpRequest<C, CF> {
     connection_factory: CF,
     url: Url,
     parser: Parser,
-    cb: @fn(+ev: RequestEvent)
+    cb: @fn(ev: RequestEvent)
 }
 
 pub fn HttpRequest<C: Connection, CF: ConnectionFactory<C>>(resolver: DnsResolver,
@@ -261,7 +261,7 @@ pub impl<C: Connection, CF: ConnectionFactory<C>> HttpRequest<C, CF> {
 
     fn on_body(&self, data: ~[u8]) -> bool {
         debug!("on_body");
-        let mut the_payload = Payload(Cell(data));
+        let the_payload = Payload(Cell(data));
         (self.cb)(the_payload);
         true
     }
