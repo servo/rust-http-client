@@ -466,8 +466,8 @@ struct struct_unnamed1 {
     len: uint16_t,
 }
 
-#[nolink]
-#[link_args = "-L. -lhttp_parser"]
+#[link_name = "http_parser"]
+#[link_args = "-L."]
 pub extern mod bindgen {
 
 fn http_parser_init(parser: *http_parser, _type: enum_http_parser_type);
