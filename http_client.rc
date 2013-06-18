@@ -173,7 +173,7 @@ pub impl<C: Connection, CF: ConnectionFactory<C>> HttpRequest<C, CF> {
 
             if next_data.is_ok() {
                 let next_data = result::unwrap(next_data);
-                debug!("data: %?", next_data);
+                debug!("data: %?", str::from_bytes(next_data));
                 let bytes_parsed = self.parser.execute(next_data, &callbacks);
                 if bytes_parsed != next_data.len() {
                     // FIXME: Need tests
@@ -268,6 +268,14 @@ pub impl<C: Connection, CF: ConnectionFactory<C>> HttpRequest<C, CF> {
 
     fn on_message_complete(&self) -> bool {
         debug!("on_message_complete");
+        let status_code = self.parser.status_code();
+
+        let status = match status_code {
+          200 => { StatusOk },
+          302 => { StatusFound },
+          _ => { StatusUnknown }
+        };
+        (self.cb)(Status(status));
         true
     }
 }
@@ -321,7 +329,12 @@ pub fn test_connect_success() {
 
     for events.each |ev| {
         match *ev {
-          Error(*) => { fail!() }
+          Error(*) => { fail!() },
+          Status(status) => match status {
+              StatusOk => { fail!(~"status OK, expected found (302)") },
+              StatusFound => { },
+              StatusUnknown => { fail!(~"status unknown, expected found (302)") }
+          },
           _ => { }
         }
     }
