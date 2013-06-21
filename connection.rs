@@ -7,9 +7,9 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-use core::comm::Port;
-use std::net::tcp::{TcpErrData, TcpConnectErrData, TcpSocket};
-use std::net::ip::IpAddr;
+use std::comm::Port;
+use extra::net::tcp::{TcpErrData, TcpConnectErrData, TcpSocket};
+use extra::net::ip::IpAddr;
 
 pub type ReadPort = Port<Result<~[u8], TcpErrData>>;
 
@@ -49,8 +49,8 @@ pub enum UvConnectionFactory {
 
 impl ConnectionFactory<TcpSocket> for UvConnectionFactory {
     fn connect(&self, ip: IpAddr, port: uint) -> Result<TcpSocket, TcpConnectErrData> {
-        use std::uv_global_loop;
-        use std::net::tcp::connect;
+        use extra::uv_global_loop;
+        use extra::net::tcp::connect;
         let iotask = uv_global_loop::get();
         return connect(copy ip, port, &iotask);
     }

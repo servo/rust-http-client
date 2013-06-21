@@ -7,7 +7,7 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-use std::net::url::Url;
+use extra::net::url::Url;
 
 pub fn build_request(url: Url) -> ~str {
 
@@ -20,7 +20,7 @@ pub fn build_request(url: Url) -> ~str {
                 (ref key, ref value) => fmt!("%s=%s", *key, *value)
             }
         };
-        path += ~"?" + str::connect(kvps, "&");
+        path += ~"?" + kvps.connect("&");
     }
 
     let request_header = fmt!("GET %s HTTP/1.0\u000D\u000AHost: %s\u000D\u000A\u000D\u000A",
@@ -32,7 +32,7 @@ pub fn build_request(url: Url) -> ~str {
 #[test]
 #[allow(non_implicitly_copyable_typarams)]
 fn should_request_slash_when_path_is_empty() {
-    use std::net::url;
+    use extra::net::url;
     let url = url::from_str(~"http://host").get();
     assert!(url.path.is_empty());
     let headers = build_request(url);

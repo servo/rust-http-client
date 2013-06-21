@@ -19,18 +19,21 @@ A simple HTTP client in Rust
 
 #[crate_type = "lib"];
 
-extern mod std;
+extern mod extra;
 
-use core::ptr::to_unsafe_ptr;
-use core::result::{Result, Ok, Err};
-use core::cell::Cell;
-use std::net::ip::{
+use std::comm;
+use std::ptr::to_unsafe_ptr;
+use std::result;
+use std::result::{Result, Ok, Err};
+use std::cell::Cell;
+use std::str;
+use extra::net::ip::{
     get_addr, format_addr,
     IpAddr, IpGetAddrErr, Ipv4, Ipv6
 };
-use std::net::tcp::{TcpErrData, TcpSocket};
-use std::net::url::Url;
-use std::uv_global_loop;
+use extra::net::tcp::{TcpErrData, TcpSocket};
+use extra::net::url::Url;
+use extra::uv_global_loop;
 use connection::{
     Connection, ConnectionFactory, UvConnectionFactory
 };
@@ -106,8 +109,8 @@ pub fn HttpRequest<C: Connection, CF: ConnectionFactory<C>>(resolver: DnsResolve
 }
 
 #[allow(non_implicitly_copyable_typarams)]
-pub impl<C: Connection, CF: ConnectionFactory<C>> HttpRequest<C, CF> {
-    fn begin(&mut self, cb: @fn(ev: RequestEvent)) {
+impl<C: Connection, CF: ConnectionFactory<C>> HttpRequest<C, CF> {
+    pub fn begin(&mut self, cb: @fn(ev: RequestEvent)) {
         debug!("http_client: looking up url %?", self.url.to_str());
         let ip_addr = match self.get_ip() {
           Ok(addr) => { copy addr }
@@ -132,7 +135,7 @@ pub impl<C: Connection, CF: ConnectionFactory<C>> HttpRequest<C, CF> {
 
         let request_header = build_request(copy self.url);
         debug!("http_client: writing request header: %?", request_header);
-        let request_header_bytes = str::to_bytes(request_header);
+        let request_header_bytes = request_header.as_bytes().to_owned();
         match socket.write_(request_header_bytes) {
           result::Ok(*) => { }
           result::Err(*) => {
@@ -200,7 +203,7 @@ pub impl<C: Connection, CF: ConnectionFactory<C>> HttpRequest<C, CF> {
         socket.read_stop_(read_port);
     }
 
-    fn get_ip(&self) -> Result<IpAddr, RequestError> {
+    pub fn get_ip(&self) -> Result<IpAddr, RequestError> {
         let ip_addrs = (self.resolve_ip_addr)(copy self.url.host);
         if ip_addrs.is_ok() {
             let ip_addrs = result::unwrap(ip_addrs);
@@ -232,41 +235,41 @@ pub impl<C: Connection, CF: ConnectionFactory<C>> HttpRequest<C, CF> {
         }
     }
 
-    fn on_message_begin(&self) -> bool {
+    pub fn on_message_begin(&self) -> bool {
         debug!("on_message_begin");
         true
     }
 
-    fn on_url(&self, _data: ~[u8]) -> bool {
+    pub fn on_url(&self, _data: ~[u8]) -> bool {
         debug!("on_url");
         true
     }
 
-    fn on_header_field(&self, data: ~[u8]) -> bool {
+    pub fn on_header_field(&self, data: ~[u8]) -> bool {
         let header_field = str::from_bytes(data);
         debug!("on_header_field: %?", header_field);
         true
     }
 
-    fn on_header_value(&self, data: ~[u8]) -> bool {
+    pub fn on_header_value(&self, data: ~[u8]) -> bool {
         let header_value = str::from_bytes(data);
         debug!("on_header_value: %?", header_value);
         true
     }
 
-    fn on_headers_complete(&self) -> bool {
+    pub fn on_headers_complete(&self) -> bool {
         debug!("on_headers_complete");
         true
     }
 
-    fn on_body(&self, data: ~[u8]) -> bool {
+    pub fn on_body(&self, data: ~[u8]) -> bool {
         debug!("on_body");
-        let the_payload = Payload(Cell(data));
+        let the_payload = Payload(Cell::new(data));
         (self.cb)(the_payload);
         true
     }
 
-    fn on_message_complete(&self) -> bool {
+    pub fn on_message_complete(&self) -> bool {
         debug!("on_message_complete");
         let status_code = self.parser.status_code();
 
@@ -286,7 +289,7 @@ pub fn sequence<C: Connection, CF: ConnectionFactory<C>>(request: &mut HttpReque
     
     let events = @mut ~[];
     do request.begin |event| {
-        vec::push(&mut *events, event)
+        events.push(event)
     }
     return copy *events;
 }
@@ -294,7 +297,7 @@ pub fn sequence<C: Connection, CF: ConnectionFactory<C>>(request: &mut HttpReque
 #[test]
 #[allow(non_implicitly_copyable_typarams)]
 pub fn test_resolve_error() {
-    use std::net::url;
+    use extra::net::url;
     let url = url::from_str(~"http://example.com_not_real/").get();
     let mut request = uv_http_request(url);
     let events = sequence(&mut request);
@@ -309,7 +312,7 @@ pub fn test_resolve_error() {
 pub fn test_connect_error() {
     // This address is invalid because the first octet
     // of a class A address cannot be 0
-    use std::net::url;
+    use extra::net::url;
     let url = url::from_str(~"http://0.42.42.42/").get();
     let mut request = uv_http_request(url);
     let events = sequence(&mut request);
@@ -322,7 +325,7 @@ pub fn test_connect_error() {
 #[test]
 #[allow(non_implicitly_copyable_typarams)]
 pub fn test_connect_success() {
-    use std::net::url;
+    use extra::net::url;
     let url = url::from_str(~"http://example.com/").get();
     let mut request = uv_http_request(url);
     let events = sequence(&mut request);
@@ -344,7 +347,7 @@ pub fn test_connect_success() {
 #[ignore(reason = "ICE")]
 #[allow(non_implicitly_copyable_typarams)]
 pub fn test_simple_response() {
-    use std::net::url;
+    use extra::net::url;
     use connection::{MockConnection, MockConnectionFactory};
     let _url = url::from_str(~"http://whatever/").get();
     let _mock_connection = MockConnection {
@@ -355,7 +358,7 @@ pub fn test_simple_response() {
             let response = ~"HTTP/1.0 200 OK\
                             \
                             Test";
-            chan.send(Ok(str::to_bytes(response)));
+            chan.send(Ok(response.as_bytes().to_owned()));
 
             Ok(@port)
         },

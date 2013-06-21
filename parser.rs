@@ -10,11 +10,12 @@
 //! Higher-level Rust constructs for http_parser
 
 use http_parser;
-use core::vec::raw::from_buf_raw;
-use core::libc::{c_int, c_void, c_char, size_t};
-use core::ptr::{null, to_unsafe_ptr};
+use std::vec::raw::from_buf_raw;
+use std::libc::{c_int, c_void, c_char, size_t};
+use std::ptr::{null, to_unsafe_ptr};
+use std::vec;
 use http_parser::{http_parser_settings, HTTP_RESPONSE};
-use http_parser::bindgen::{http_parser_init, http_parser_execute};
+use http_parser::{http_parser_init, http_parser_execute};
 
 pub type HttpCallback = @fn() -> bool;
 pub type HttpDataCallback = @fn(data: ~[u8]) -> bool;
@@ -70,8 +71,8 @@ pub fn Parser() -> Parser {
     }
 }
 
-pub impl Parser {
-    fn execute(&mut self, data: &[u8], callbacks: &ParserCallbacks) -> uint {
+impl Parser {
+    pub fn execute(&mut self, data: &[u8], callbacks: &ParserCallbacks) -> uint {
         unsafe {
             self.http_parser.data = to_unsafe_ptr(callbacks) as *c_void;
             do vec::as_imm_buf(data) |buf, _| {
@@ -83,7 +84,7 @@ pub impl Parser {
         }
     }
 
-    fn status_code(&self) -> uint {
+    pub fn status_code(&self) -> uint {
         self.http_parser.status_code as uint
     }
 }
