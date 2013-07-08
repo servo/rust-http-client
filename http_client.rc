@@ -12,16 +12,16 @@
 A simple HTTP client in Rust
 
 */
-
 #[link(name = "http_client",
        vers = "0.1",
        uuid = "3bfdcc24-ca55-447b-a9e1-8f7ac37c222e")];
 
 #[crate_type = "lib"];
 
+#[allow(non_uppercase_statics)];
+
 extern mod extra;
 
-use std::comm;
 use std::ptr::to_unsafe_ptr;
 use std::result;
 use std::result::{Result, Ok, Err};
@@ -188,7 +188,7 @@ impl<C: Connection, CF: ConnectionFactory<C>> HttpRequest<C, CF> {
                 // This method of detecting EOF is lame
                 match next_data {
                   result::Err(TcpErrData {err_name: ~"EOF", _}) => {
-                    self.parser.execute(~[], &callbacks);
+                    self.parser.execute([], &callbacks);
                     break;
                   }
                   _ => {
@@ -211,15 +211,15 @@ impl<C: Connection, CF: ConnectionFactory<C>> HttpRequest<C, CF> {
             //#debug("http_client: got IP addresses for %?: %?", self.url, ip_addrs);
             if ip_addrs.len() != 0 {
                 // FIXME: Which address should we really pick?
-                let best_ip = do ip_addrs.find |ip| {
-                    match *ip {
+                let best_ip = do ip_addrs.iter().find_ |ip| {
+                    match **ip {
                       Ipv4(*) => { true }
                       Ipv6(*) => { false }
                     }
                 };
 
                 if best_ip.is_some() {
-                    return Ok(best_ip.unwrap());
+                    return Ok(*best_ip.unwrap());
                 } else {
                     // FIXME: Need test
                     return Err(ErrorMisc);

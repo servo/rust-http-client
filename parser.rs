@@ -13,7 +13,6 @@ use http_parser;
 use std::vec::raw::from_buf_raw;
 use std::libc::{c_int, c_void, c_char, size_t};
 use std::ptr::{null, to_unsafe_ptr};
-use std::vec;
 use http_parser::{http_parser_settings, HTTP_RESPONSE};
 use http_parser::{http_parser_init, http_parser_execute};
 
@@ -75,7 +74,7 @@ impl Parser {
     pub fn execute(&mut self, data: &[u8], callbacks: &ParserCallbacks) -> uint {
         unsafe {
             self.http_parser.data = to_unsafe_ptr(callbacks) as *c_void;
-            do vec::as_imm_buf(data) |buf, _| {
+            do data.as_imm_buf |buf, _| {
                 http_parser_execute(&self.http_parser,
                                     &self.settings,
                                     buf as *c_char,
