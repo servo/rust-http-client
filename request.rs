@@ -20,7 +20,8 @@ pub fn build_request(url: Url) -> ~str {
                 (ref key, ref value) => fmt!("%s=%s", *key, *value)
             }
         };
-        path += ~"?" + kvps.connect("&");
+        path.push_str("?");
+        path.push_str(kvps.connect("&"));
     }
 
     let request_header = fmt!("GET %s HTTP/1.0\u000D\u000AHost: %s\u000D\u000A\u000D\u000A",
