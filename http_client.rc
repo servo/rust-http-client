@@ -298,7 +298,7 @@ pub fn sequence<C: Connection, CF: ConnectionFactory<C>>(request: &mut HttpReque
 #[allow(non_implicitly_copyable_typarams)]
 pub fn test_resolve_error() {
     use extra::net::url;
-    let url = url::from_str(~"http://example.com_not_real/").get();
+    let url = url::from_str("http://example.com_not_real/").get();
     let mut request = uv_http_request(url);
     let events = sequence(&mut request);
 
@@ -313,7 +313,7 @@ pub fn test_connect_error() {
     // This address is invalid because the first octet
     // of a class A address cannot be 0
     use extra::net::url;
-    let url = url::from_str(~"http://0.42.42.42/").get();
+    let url = url::from_str("http://0.42.42.42/").get();
     let mut request = uv_http_request(url);
     let events = sequence(&mut request);
 
@@ -326,11 +326,11 @@ pub fn test_connect_error() {
 #[allow(non_implicitly_copyable_typarams)]
 pub fn test_connect_success() {
     use extra::net::url;
-    let url = url::from_str(~"http://example.com/").get();
+    let url = url::from_str("http://example.com/").get();
     let mut request = uv_http_request(url);
     let events = sequence(&mut request);
 
-    for events.each |ev| {
+    for events.iter().advance |ev| {
         match *ev {
           Error(*) => { fail!() },
           Status(status) => match status {
@@ -349,7 +349,8 @@ pub fn test_connect_success() {
 pub fn test_simple_response() {
     use extra::net::url;
     use connection::{MockConnection, MockConnectionFactory};
-    let _url = url::from_str(~"http://whatever/").get();
+    use std::comm;
+    let _url = url::from_str("http://whatever/").get();
     let _mock_connection = MockConnection {
         write_fn: |_data| { Ok(()) },
         read_start_fn: || {
