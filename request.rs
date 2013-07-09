@@ -34,8 +34,8 @@ pub fn build_request(url: Url) -> ~str {
 #[allow(non_implicitly_copyable_typarams)]
 fn should_request_slash_when_path_is_empty() {
     use extra::net::url;
-    let url = url::from_str(~"http://host").get();
+    let url = url::from_str("http://host").get();
     assert!(url.path.is_empty());
     let headers = build_request(url);
-    assert!(headers.contains(~"GET / "));
+    assert!(headers.contains("GET / "));
 }
