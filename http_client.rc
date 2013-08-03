@@ -326,7 +326,7 @@ pub fn test_connect_error() {
 #[allow(non_implicitly_copyable_typarams)]
 pub fn test_connect_success() {
     use extra::net::url;
-    let url = url::from_str("http://example.com/").get();
+    let url = url::from_str("http://example.iana.org/").get();
     let mut request = uv_http_request(url);
     let events = sequence(&mut request);
 
@@ -334,9 +334,9 @@ pub fn test_connect_success() {
         match *ev {
           Error(*) => { fail!() },
           Status(status) => match status {
-              StatusOk => { fail!(~"status OK, expected found (302)") },
-              StatusFound => { },
-              StatusUnknown => { fail!(~"status unknown, expected found (302)") }
+              StatusOk => { },
+              StatusFound => { fail!(~"status found, expected OK (200)") },
+              StatusUnknown => { fail!(~"status unknown, expected OK (200)") }
           },
           _ => { }
         }

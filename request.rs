@@ -18,7 +18,7 @@ pub fn build_request(url: Url) -> ~str {
         let kvps = do url.query.map |pair| {
             match *pair {
                 (ref key, ref value) => {
-                    let qs_value:~str = (*value).replace(" ", "%20");
+                    let qs_value = (*value).replace(" ", "%20");
                     fmt!("%s=%s", *key, qs_value)
                 }
             }
