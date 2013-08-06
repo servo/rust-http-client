@@ -102,7 +102,7 @@ pub enum RequestError {
     ErrorMisc
 }
 
-/// Request 
+/// Request
 #[deriving(Eq)]
 pub enum RequestEvent {
     Status(StatusCode),
@@ -322,9 +322,9 @@ impl<C: Connection, CF: ConnectionFactory<C>> HttpRequest<C, CF> {
 }
 
 #[allow(non_implicitly_copyable_typarams)]
-pub fn sequence<C: Connection, CF: ConnectionFactory<C>>(request: &mut HttpRequest<C, CF>) -> 
+pub fn sequence<C: Connection, CF: ConnectionFactory<C>>(request: &mut HttpRequest<C, CF>) ->
     ~[RequestEvent] {
-    
+
     let events = @mut ~[];
     do request.begin |event| {
         events.push(event)
@@ -375,6 +375,7 @@ pub fn test_connect_success() {
               StatusOk => { },
               StatusFound => { fail!(~"status found, expected OK (200)") },
               StatusUnknown => { fail!(~"status unknown, expected OK (200)") }
+              _ => { fail!(~"Unexpected HTTP Status code returned.")}
           },
           _ => { }
         }
