@@ -364,7 +364,7 @@ pub fn test_connect_error() {
 #[allow(non_implicitly_copyable_typarams)]
 pub fn test_connect_success() {
     use extra::net::url;
-    let url = url::from_str("http://example.iana.org/").get();
+    let url = url::from_str("http://www.google.com/").get();
     let mut request = uv_http_request(url);
     let events = sequence(&mut request);
 
