@@ -361,6 +361,7 @@ pub fn test_connect_error() {
 }
 
 #[test]
+#[ignore(reason = "no external internet on build slaves")]
 #[allow(non_implicitly_copyable_typarams)]
 pub fn test_connect_success() {
     use extra::net::url;
