@@ -27,6 +27,7 @@ use std::result;
 use std::result::{Result, Ok, Err};
 use std::cell::Cell;
 use std::str;
+use std::uint;
 use extra::net::ip::{
     get_addr, format_addr,
     IpAddr, IpGetAddrErr, Ipv4, Ipv6
@@ -158,8 +159,12 @@ impl<C: Connection, CF: ConnectionFactory<C>> HttpRequest<C, CF> {
         debug!("http_client: using IP %? for %?", format_addr(&ip_addr), self.url.to_str());
 
         let socket = {
-            debug!("http_client: connecting to %?", ip_addr);
-            let socket = self.connection_factory.connect(copy ip_addr, 80);
+            let port = match self.url.port.clone() {
+                Some(port) => uint::from_str(port).get(),
+                _ => 80
+            };
+            debug!("http_client: connecting to %? on %?", ip_addr, port);
+            let socket = self.connection_factory.connect(copy ip_addr, port);
             if socket.is_ok() {
                 result::unwrap(socket)
             } else {
